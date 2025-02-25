@@ -8,18 +8,19 @@ load_dotenv()
 MONGODB_URI = os.getenv("MONGODB_URI")
 
 # Binance API Key ve Secret Key ortam değişkenlerinden alınır
-BINANCE_API_KEY = os.getenv('API_KEY')
-BINANCE_API_SECRET = os.getenv('API_SECRET')
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
+BINANCE_API_SECRET = os.getenv('BINANCE_API_SECRET')
 
 # Coin bilgileri
 SPOT_URL = os.getenv("SPOT_URL")
-INTERVAL = os.getenv("INTERVAL")
-LIMIT = os.getenv("LIMIT")
-RSI_PERIOD = 14
-FAST_LENGTH = os.getenv("FAST_LENGTH")
-SLOW_LENGTH = os.getenv("SLOW_LENGTH")
-SIGNAL_LENGTH = os.getenv("SIGNAL_LENGTH")
+INTERVAL = str(os.getenv("INTERVAL"))
+LIMIT = int(os.getenv("LIMIT"))
+FAST_LENGTH = int(os.getenv("FAST_LENGTH"))
+SLOW_LENGTH = int(os.getenv("SLOW_LENGTH"))
+SIGNAL_LENGTH = int(os.getenv("SIGNAL_LENGTH"))
 ADX_PERIOD = 14
+RSI_PERIOD = 14
+
 
 MACD_THRESHOLDS = {
     'M2': {'long': int(os.getenv('MACD_THRESHOLDS_M2_LONG')), 'short': int(os.getenv('MACD_THRESHOLDS_M2_SHORT'))},

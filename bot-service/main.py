@@ -98,18 +98,27 @@ def get_spot_symbols():
                 continue
 
 
+
+
+from datetime import datetime
+
+from datetime import datetime, timedelta
+
 def fetch_price_data(symbol, interval="1h", limit=1000):
     """Binance spot fiyat verilerini çeker"""
-    endpoint = "/api/v3/klines"  # Spot işlemler için endpoint
+    endpoint = "/api/v3/klines"  
     params = {"symbol": symbol, "interval": interval, "limit": limit}
+
     try:
+        fetch_time_tr = datetime.utcnow() + timedelta(hours=3)  # 🌟 Türkiye saatine çevir
+
         response = requests.get(SPOT_URL + endpoint, params=params)
         response.raise_for_status()
         data = response.json()
 
         df = pd.DataFrame(
             data,
-            columns=[  # Kline verilerini al
+            columns=[
                 "open_time",
                 "open",
                 "high",
@@ -126,41 +135,27 @@ def fetch_price_data(symbol, interval="1h", limit=1000):
         )
 
         # Veri tiplerini düzenle
-        df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
+        df["open_time"] = pd.to_datetime(df["open_time"], unit="ms") + timedelta(hours=3)  # ✅ Türkiye saatine çevir
         for col in ["open", "high", "low", "close", "volume"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        # 🛠️ NaN değerleri temizle (Önemli!)
         df.dropna(subset=["close"], inplace=True)
 
-        # **Buraya bir debug satırı ekleyelim**
-        print(df.dtypes)  # Sütunların veri tiplerini görmek için
-        print(df.head())  # İlk birkaç satırı görmek için
-        print(df['open_time'].head())  # open_time sütununu görmek için
-        print(df['open_time'].dtype)  # open_time sütununun veri tipini görmek için
+        df["fetch_time"] = fetch_time_tr  # ✅ Türkiye saatiyle kaydet
 
-        # İndikatörleri hesapla
         df["ma200"] = df["close"].rolling(window=200).mean()
         df["rsi_close"] = talib.RSI(df["close"], timeperiod=RSI_PERIOD)
-
-        # RSI değişimini hesapla
         df["rsi_change_close"] = df["rsi_close"].diff()
-
-        # ADX hesapla
-        df['adx'] = talib.ADX(df['high'], df['low'], df['close'], timeperiod=ADX_PERIOD)
+        df["adx"] = talib.ADX(df["high"], df["low"], df["close"], timeperiod=ADX_PERIOD)
         df['+DI'] = talib.PLUS_DI(df['high'], df['low'], df['close'], timeperiod=ADX_PERIOD)
         df['-DI'] = talib.MINUS_DI(df['high'], df['low'], df['close'], timeperiod=ADX_PERIOD)
 
-        # MACD hesapla
         macd, signal, hist = talib.MACD(df["close"])
         df["macd_change"] = macd
         df["signal_change"] = signal
 
-        # ATR ve Momentum
         df["atr"] = talib.ATR(df["high"], df["low"], df["close"], timeperiod=14)
         df["momentum"] = df["close"].pct_change(10) * 100
-
-        # Order Block hesapla
         df["ob_high"] = df["high"].rolling(window=12).max()
         df["ob_low"] = df["low"].rolling(window=12).min()
 
@@ -168,8 +163,11 @@ def fetch_price_data(symbol, interval="1h", limit=1000):
         return df
     except Exception as e:
         print(f"Veri çekme hatası - {symbol}: {e}")
-        traceback.print_exc()  # Hatanın detaylarını görmek için
+        traceback.print_exc()  
         return None
+
+
+
 
 
 def initialize_db():
@@ -184,9 +182,10 @@ def initialize_db():
 def calculate_signals(df):
     """Tüm teknik sinyalleri hesaplar"""
     signals = []
-    current_time = df.index[-1].strftime('%Y-%m-%d %H:%M:%S')
-    
-    # RSI değişim sinyalleri
+
+    # 🕒 **Gerçek sinyal zamanı: Türkiye saati olarak kaydediyoruz!**
+    current_time_tr = (datetime.utcnow() + timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
+
     rsi_signals = []
     if df['rsi_change_close'].iloc[-1] > 20 and df['rsi_change_close'].iloc[-2] <= 20:
         rsi_signals.append('C20L')
@@ -196,8 +195,7 @@ def calculate_signals(df):
         rsi_signals.append('C20S')
     elif df['rsi_change_close'].iloc[-1] < -10 and df['rsi_change_close'].iloc[-2] >= -10:
         rsi_signals.append('C10S')
-    
-    # MACD sinyalleri
+
     macd_signals = []
     for level in ['M2', 'M3', 'M4', 'M5']:
         threshold = int(level[1])
@@ -205,24 +203,22 @@ def calculate_signals(df):
             macd_signals.append(f'{level}L')
         elif df['macd_change'].iloc[-1] < -threshold and df['macd_change'].iloc[-2] >= -threshold:
             macd_signals.append(f'{level}S')
-    
-    # MA200 sinyalleri
+
     ma_signals = []
     if df['close'].iloc[-1] > df['ma200'].iloc[-1] and df['close'].iloc[-2] <= df['ma200'].iloc[-2]:
         ma_signals.append('MA200L')
     elif df['close'].iloc[-1] < df['ma200'].iloc[-1] and df['close'].iloc[-2] >= df['ma200'].iloc[-2]:
         ma_signals.append('MA200S')
-    
-    # Sinyal gücünü hesapla ve sinyalleri birleştir
+
     all_signals = rsi_signals + macd_signals + ma_signals
     if all_signals:
         signal_type = 'Long' if any(s.endswith('L') for s in all_signals) else 'Short'
         signals.append({
             'signal_type': signal_type,
-            'signal_time': current_time,
+            'signal_time': current_time_tr,  # ✅ Türkiye saatine göre kaydediyoruz!
             'price': df['close'].iloc[-1],
             'pullback_level': df['low'].iloc[-1] if signal_type == 'Long' else df['high'].iloc[-1],
-            'strength': len(all_signals),  # Sinyal sayısı kadar güç
+            'strength': len(all_signals),
             'indicators': ','.join(all_signals),
             'rsi': df['rsi_close'].iloc[-1],
             'macd': df['macd_change'].iloc[-1],
@@ -233,6 +229,8 @@ def calculate_signals(df):
     return signals
 
 
+
+
 def save_price_data(symbol, df):
     """Fiyat verilerini MongoDB'ye kaydeder"""
     if df is None or df.empty:
@@ -240,34 +238,36 @@ def save_price_data(symbol, df):
 
     try:
         last_row = df.iloc[-1:].copy()
+
+        # `open_time` sütununu datetime formatına çevir
+        last_row.index = last_row.index.astype(str)  # 🛠️ MongoDB'ye uygun hale getir
+        
         data_to_save = {
             'symbol': symbol,
-            'timestamp': last_row.index.strftime('%Y-%m-%d %H:%M:%S'),
-            'open': last_row['open'],
-            'high': last_row['high'],
-            'low': last_row['low'],
-            'close': last_row['close'],
-            'volume': last_row['volume'],
-            'ma200': last_row['ma200'],
-            'rsi_close': last_row['rsi_close'],
-            'rsi_change_close': last_row['rsi_change_close'],
-            'adx': last_row['adx'],
-            'plus_di': last_row['+DI'],
-            'minus_di': last_row['-DI'],
-            'macd_change': last_row['macd_change'],
-            'signal_change': last_row['signal_change'],
-            'atr': last_row['atr'],
-            'momentum': last_row['momentum'],
-            'ob_high': last_row['ob_high'],
-            'ob_low': last_row['ob_low']
+            'timestamp': datetime.strptime(last_row.index[0], "%Y-%m-%d %H:%M:%S"),  # ✅ ISODate formatına çevir
+            'open': last_row['open'].iloc[0],
+            'high': last_row['high'].iloc[0],
+            'low': last_row['low'].iloc[0],
+            'close': last_row['close'].iloc[0],
+            'volume': last_row['volume'].iloc[0],
+            'ma200': last_row['ma200'].iloc[0] if 'ma200' in last_row else None,
+            'rsi_close': last_row['rsi_close'].iloc[0] if 'rsi_close' in last_row else None,
+            'rsi_change_close': last_row['rsi_change_close'].iloc[0] if 'rsi_change_close' in last_row else None,
+            'adx': last_row['adx'].iloc[0] if 'adx' in last_row else None,
+            'plus_di': last_row['+DI'].iloc[0] if '+DI' in last_row else None,
+            'minus_di': last_row['-DI'].iloc[0] if '-DI' in last_row else None,
+            'macd_change': last_row['macd_change'].iloc[0] if 'macd_change' in last_row else None,
+            'signal_change': last_row['signal_change'].iloc[0] if 'signal_change' in last_row else None,
+            'atr': last_row['atr'].iloc[0] if 'atr' in last_row else None,
+            'momentum': last_row['momentum'].iloc[0] if 'momentum' in last_row else None,
+            'ob_high': last_row['ob_high'].iloc[0] if 'ob_high' in last_row else None,
+            'ob_low': last_row['ob_low'].iloc[0] if 'ob_low' in last_row else None
         }
+        
         db.price_data.update_one(
-            {
-                "symbol": symbol,
-                "timestamp": data_to_save["timestamp"],
-            },  # Aynı zamanlı veriyi güncelle
+            {"symbol": symbol, "timestamp": data_to_save["timestamp"]},  
             {"$set": data_to_save},
-            upsert=True,  # Eğer yoksa ekle, varsa güncelle
+            upsert=True  # Eğer yoksa ekle, varsa güncelle
         )
     except Exception as e:
         print(f"Veri kaydetme hatası - {symbol}: {e}")
