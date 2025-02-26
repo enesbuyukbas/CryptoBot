@@ -104,7 +104,7 @@ from datetime import datetime
 
 from datetime import datetime, timedelta
 
-def fetch_price_data(symbol, interval="1h", limit=1000):
+def fetch_price_data(symbol, interval="15m", limit=1000):
     """Binance spot fiyat verilerini çeker"""
     endpoint = "/api/v3/klines"  
     params = {"symbol": symbol, "interval": interval, "limit": limit}
@@ -180,10 +180,9 @@ def initialize_db():
 
 
 def calculate_signals(df):
-    """Tüm teknik sinyalleri hesaplar"""
+    """Tüm teknik sinyalleri hesaplar ve hedef fiyatı belirler."""
     signals = []
 
-    # 🕒 **Gerçek sinyal zamanı: Türkiye saati olarak kaydediyoruz!**
     current_time_tr = (datetime.utcnow() + timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
 
     rsi_signals = []
@@ -213,11 +212,49 @@ def calculate_signals(df):
     all_signals = rsi_signals + macd_signals + ma_signals
     if all_signals:
         signal_type = 'Long' if any(s.endswith('L') for s in all_signals) else 'Short'
+        
+        # 📌 **Hedef fiyatı belirleme**
+        atr = df["atr"].iloc[-1]  # ATR değeri (Volatilite)
+        current_price = df['close'].iloc[-1]  # Güncel kapanış fiyatı
+        ma200 = df["ma200"].iloc[-1]  # 200 Günlük Hareketli Ortalama
+        ma50 = df["ma200"].iloc[-1]  # 50 Günlük Hareketli Ortalama
+        rsi = df["rsi_close"].iloc[-1]  # RSI göstergesi
+        macd = df["macd_change"].iloc[-1]  # MACD göstergesi
+        
+        ### **📈 Hedef fiyat hesaplama kriterleri:**
+        # 🚀 Long İşlem için:
+        if signal_type == 'Long':
+            fib_target = current_price * 1.08  # %8 yukarı Fibonacci tahmini
+            atr_target = current_price + (atr * 2)  # ATR bazlı hedef
+            ma_target = ma50 + (atr * 1.5)  # MA50 destekli hedef fiyat
+            
+            # Eğer fiyat MA200 üzerindeyse, MA hedefini daha yukarı ayarla
+            if current_price > ma200:
+                ma_target = ma200 + atr
+            
+            # **Son hedef fiyatın ortalaması**
+            target_price = (fib_target + atr_target + ma_target) / 3
+
+        # 📉 Short İşlem için:
+        else:
+            fib_target = current_price * 0.92  # %8 aşağı Fibonacci tahmini
+            atr_target = current_price - (atr * 2)  # ATR bazlı hedef
+            ma_target = ma50 - (atr * 1.5)  # MA50 destekli hedef fiyat
+            
+            # Eğer fiyat MA200 altındaysa, MA hedefini daha aşağı ayarla
+            if current_price < ma200:
+                ma_target = ma200 - atr
+            
+            # **Son hedef fiyatın ortalaması**
+            target_price = (fib_target + atr_target + ma_target) / 3
+
+        # Sonuçları kaydet
         signals.append({
             'signal_type': signal_type,
-            'signal_time': current_time_tr,  # ✅ Türkiye saatine göre kaydediyoruz!
-            'price': df['close'].iloc[-1],
+            'signal_time': current_time_tr,
+            'price': current_price,
             'pullback_level': df['low'].iloc[-1] if signal_type == 'Long' else df['high'].iloc[-1],
+            'target_price': round(target_price, 5),  # 📌 **Yeni eklendi**
             'strength': len(all_signals),
             'indicators': ','.join(all_signals),
             'rsi': df['rsi_close'].iloc[-1],
@@ -225,8 +262,10 @@ def calculate_signals(df):
             'momentum': df['momentum'].iloc[-1],
             'atr': df['atr'].iloc[-1]
         })
+
     
     return signals
+
 
 
 
@@ -287,6 +326,7 @@ def save_signals(symbol, signals):
                 "signal_type": signal["signal_type"],
                 "price": signal["price"],
                 "pullback_level": signal["pullback_level"],
+                "target_price": signal["target_price"],  
                 "strength": signal["strength"],
                 "indicators": signal["indicators"],
             }
@@ -296,6 +336,10 @@ def save_signals(symbol, signals):
                 upsert=True,  # Eğer yoksa ekle, varsa güncelle
             )
 
+            # ✅ Debug için ekleyelim
+            print(f"✅ MongoDB'ye kaydedildi: {signal_data}")
+
+
             # En güçlü 3 sinyali göster
             top_signals = (
                 db.signals.find().sort([("strength", -1), ("signal_time", -1)]).limit(3)
@@ -304,10 +348,11 @@ def save_signals(symbol, signals):
                 print("\n🏆 En Güçlü 3 Sinyal:")
                 for signal in top_signals:
                     print(
-                        f"💫 {signal['symbol']} - {signal['signal_type']} (Güç: {signal['strength']}) - {signal['indicators']}"
+                        f"💫 {signal['symbol']} - {signal['signal_type']} (Güç: {signal['strength']}) - {signal['indicators']} - 🎯 Hedef Fiyat: {signal.get('target_price', 'Yok')}"
                     )
     except Exception as e:
-        print(f"Sinyal kaydetme hatası - {symbol}: {e}")
+        print(f"❌ Sinyal kaydetme hatası - {symbol}: {e}")
+
 
 
 def main():
@@ -324,7 +369,7 @@ def main():
             for symbol in symbols:
                 try:
                     print(f"{symbol} için veriler çekiliyor...")
-                    df = fetch_price_data(symbol)
+                    df = fetch_price_data(symbol, interval="15m")
 
                     if df is not None:
                         # Verileri kaydet
@@ -347,8 +392,8 @@ def main():
                     print(f"❌ {symbol} işlenirken hata: {e}")
                     continue
 
-            print("Tüm veriler güncellendi. 1 saat bekleniyor...")
-            time.sleep(3600)  # 1 saat bekle
+            print("Tüm veriler güncellendi. 15 dakika bekleniyor...")
+            time.sleep(900)  # 15 dakika bekle
         except Exception as e:
             print(f"Genel hata oluştu: {e}")
             time.sleep(60)  # Hata durumunda 1 dakika bekle
