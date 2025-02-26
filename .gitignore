@@ -26,7 +26,7 @@ __pycache__/
 *.pyo
 *.pyd
 venv/
-env/
+.env/
 pip-log.txt
 
 # 📌 ASP.NET Core config dosyaları (MongoDB bilgilerini içerir!)
