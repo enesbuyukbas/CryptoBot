@@ -1,4 +1,13 @@
+using backend_service.Models;
+using backend_service.Services;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// MongoDB Ayarlarýný Konfigürasyon Dosyasýndan Yükle
+builder.Services.Configure<MongoDBSettings>(
+    builder.Configuration.GetSection("MongoDB"));
+
+builder.Services.AddSingleton<SignalService>(); // SignalService'i servislere ekle
 
 // Add services to the container.
 
