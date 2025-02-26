@@ -1,2 +1,100 @@
-# Hassas dosyalar
-.env
+# 📌 Genel Ignore Kuralları (Sistem Dosyaları)
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*.cache
+!.gitkeep
+
+# 📌 **Node.js / Angular (frontend-service)**
+node_modules/
+npm-debug.log
+package-lock.json
+dist/
+coverage/
+.angular/
+# Angular Config Files (Keep These)
+!frontend-service/angular.json
+!frontend-service/tsconfig.json
+
+# 📌 **Python (bot-service)**
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+pip-log.txt
+
+# 📌 ASP.NET Core config dosyaları (MongoDB bilgilerini içerir!)
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
+secrets.json  # Hassas bilgiler için
+
+# 📌 **.NET Core / ASP.NET (backend-service)**
+bin/
+obj/
+*.db
+*.suo
+*.user
+*.lock
+*.cache
+*.config
+*.pdb
+*.log
+*.bak
+*.nupkg
+*.snupkg
+*.vs/
+.vscode/
+
+# 📌 **.NET Core Paketleri ve Bağımlılıkları**
+/packages/
+/project.lock.json
+/project.assets.json
+
+# 📌 **Visual Studio ve Rider Gereksiz Dosyaları**
+*.sln.ide
+.idea/
+.vs/
+*.csproj.user
+*.suo
+
+# 📌 **MongoDB ve Veri Dosyaları**
+/data/db/
+/dump/
+/*.lock
+seed/
+
+# 📌 **Docker Ignore**
+docker-compose.override.yml
+.dockerignore
+/.env
+
+# 📌 **Log ve Geçici Dosyalar**
+*.log
+*.out
+*.pid
+*.seed
+*.seeded
+debug.log
+
+# 📌 **MacOS Gereksiz Dosyaları**
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# 📌 **Linux Gereksiz Dosyaları**
+*.swp
+*~
+
+# 📌 **Windows Gereksiz Dosyaları**
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
