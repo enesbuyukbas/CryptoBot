@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { SignalTableComponent } from './components/signal-table/signal-table.component'; // ✅ SignalTable bileşenini içe aktardık
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrls: ['./app.component.css'],
+  imports: [SignalTableComponent] // ✅ Buraya ekledik
 })
 export class AppComponent {
-  title = 'frontend';
+  title = 'Crypto Signal Dashboard';
 }

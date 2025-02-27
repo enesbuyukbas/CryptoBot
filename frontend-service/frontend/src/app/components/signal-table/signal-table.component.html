@@ -1,0 +1,33 @@
+<h2>Sinyaller</h2>
+<table border="1">
+  <thead>
+    <tr>
+      <th>Coin</th>
+      <th>Signal Type</th>
+      <th>Strength</th>
+      <th>Price</th>
+      <th>Open</th>
+      <th>High</th>
+      <th>Low</th>
+      <th>Close</th>
+      <th>ATR</th>
+      <th>ADX</th>
+      <th>ROC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let signal of signals">
+      <td>{{ signal.symbol }}</td>
+      <td>{{ signal.signal_type }}</td>
+      <td>{{ signal.strength }}</td>
+      <td>{{ signal.price }}</td>
+      <td>{{ signal.open }}</td>
+      <td>{{ signal.high }}</td>
+      <td>{{ signal.low }}</td>
+      <td>{{ signal.close }}</td>
+      <td>{{ signal.atr }}</td>
+      <td>{{ signal.adx }}</td>
+      <td>{{ signal.roc }}</td>
+    </tr>
+  </tbody>
+</table>

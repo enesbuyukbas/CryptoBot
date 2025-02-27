@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class SignalService {
-  private apiUrl = 'http://localhost:5000/api/signals'; // Backend API URL
+  private apiUrl = 'http://localhost:5008/api/signals'; // Backend API URL
 
   constructor(private http: HttpClient) {}
 
