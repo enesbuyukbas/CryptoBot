@@ -7,28 +7,30 @@ namespace backend_service.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-        public string Symbol { get; set; }
-        public string SignalType { get; set; }
-        public int Strength { get; set; }
+        public required string Id { get; set; }
+
+        [BsonElement("symbol")]  // ✅ MongoDB'deki "symbol" ile eşleşmeli
+        public required string Symbol { get; set; }
+
+        [BsonElement("signalType")]  // ✅ MongoDB'deki "signal_type" ile eşleşmeli
+        public required string SignalType { get; set; }
+
+        [BsonElement("price")]
         public double Price { get; set; }
-        public double Open { get; set; }
-        public double High { get; set; }
-        public double Low { get; set; }
-        public double Close { get; set; }
-        public bool C20 { get; set; }
-        public bool C10 { get; set; }
-        public bool M2 { get; set; }
-        public bool M3 { get; set; }
-        public bool M4 { get; set; }
-        public bool M5 { get; set; }
-        public bool MA20 { get; set; }
-        public bool MA50 { get; set; }
-        public bool MA200 { get; set; }
-        public double ATR { get; set; }
-        public double ADX { get; set; }
-        public double ROC { get; set; }
-        public double StopLoss { get; set; }
+
+        [BsonElement("pullback_level")]
+        public double PullbackLevel { get; set; }
+
+        [BsonElement("target_price")]
         public double TargetPrice { get; set; }
+
+        [BsonElement("strength")]
+        public int Strength { get; set; }
+
+        [BsonElement("indicators")]
+        public required string Indicators { get; set; }
+
+        [BsonElement("signal_time")]
+        public required string SignalTime { get; set; }
     }
 }

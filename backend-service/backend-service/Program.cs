@@ -3,6 +3,17 @@ using backend_service.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// CORS 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularApp",
+        policy => policy
+            .WithOrigins("http://localhost:4200") //  Angular'ýn çalýþtýðý port
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()); // Eðer kimlik doðrulama gerekiyorsa
+});
+
 // MongoDB Ayarlarýný Konfigürasyon Dosyasýndan Yükle
 builder.Services.Configure<MongoDBSettings>(
     builder.Configuration.GetSection("MongoDB"));
@@ -17,6 +28,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseCors("AllowAngularApp"); // CORS Politikasýný Etkinleþtir
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
