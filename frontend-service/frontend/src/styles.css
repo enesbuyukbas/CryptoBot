@@ -1,1 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
+h2 {
+  font-weight: bold;
+  color: #343a40;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+}

@@ -12,7 +12,7 @@ namespace backend_service.Models
         [BsonElement("symbol")]  // ✅ MongoDB'deki "symbol" ile eşleşmeli
         public required string Symbol { get; set; }
 
-        [BsonElement("signalType")]  // ✅ MongoDB'deki "signal_type" ile eşleşmeli
+        [BsonElement("signal_type")]  // ✅ MongoDB'deki "signal_type" ile eşleşmeli
         public required string SignalType { get; set; }
 
         [BsonElement("price")]

@@ -1,33 +1,47 @@
-<h2>Sinyaller</h2>
-<table border="1">
-  <thead>
-    <tr>
-      <th>Coin</th>
-      <th>Signal Type</th>
-      <th>Strength</th>
-      <th>Price</th>
-      <th>Open</th>
-      <th>High</th>
-      <th>Low</th>
-      <th>Close</th>
-      <th>ATR</th>
-      <th>ADX</th>
-      <th>ROC</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let signal of signals">
-      <td>{{ signal.symbol }}</td>
-      <td>{{ signal.signal_type }}</td>
-      <td>{{ signal.strength }}</td>
-      <td>{{ signal.price }}</td>
-      <td>{{ signal.open }}</td>
-      <td>{{ signal.high }}</td>
-      <td>{{ signal.low }}</td>
-      <td>{{ signal.close }}</td>
-      <td>{{ signal.atr }}</td>
-      <td>{{ signal.adx }}</td>
-      <td>{{ signal.roc }}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="container my-4">
+  <h2 class="mb-4 text-center">Sinyaller</h2>
+
+  <div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover table-striped table-bordered align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Coin</th>
+          <th>Signal Type</th>
+          <th>Strength</th>
+          <th>Price</th>
+          <th>Open</th>
+          <th>High</th>
+          <th>Low</th>
+          <th>Close</th>
+          <th>ATR</th>
+          <th>ADX</th>
+          <th>ROC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let signal of signals">
+          <td>{{ signal.symbol }}</td>
+          <td>
+            <span class="badge"
+                  [ngClass]="{
+                    'bg-success': signal.signal_type === 'Buy',
+                    'bg-danger': signal.signal_type === 'Sell',
+                    'bg-secondary': signal.signal_type !== 'Buy' && signal.signal_type !== 'Sell'
+                  }">
+              {{ signal.signal_type }}
+            </span>
+          </td>
+          <td>{{ signal.strength }}</td>
+          <td>{{ signal.price | currency:'USD' }}</td>
+          <td>{{ signal.open }}</td>
+          <td>{{ signal.high }}</td>
+          <td>{{ signal.low }}</td>
+          <td>{{ signal.close }}</td>
+          <td>{{ signal.atr }}</td>
+          <td>{{ signal.adx }}</td>
+          <td>{{ signal.roc }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
