@@ -7,3 +7,14 @@ h2 {
 .table td, .table th {
   vertical-align: middle;
 }
+
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --accent-color: #20c997;
+  --background-color: #f8f9fa;
+}
+body {
+  background-color: var(--background-color);
+  font-family: 'Segoe UI', sans-serif;
+}

@@ -11,17 +11,32 @@ import { SignalService } from '../../services/signal.service';
 })
 export class SignalTableComponent implements OnInit {
   signals: any[] = [];
+  top3Signals: any[] = []; // <-- kartlar için
   private signalService = inject(SignalService);
 
-  constructor() {}
-
   ngOnInit() {
+    // 1) Önce top3'ü backend'den iste
+    this.signalService.getTopSignals().subscribe({
+      next: (data) => {
+        this.top3Signals = (data ?? []).slice(0, 3);
+      },
+      error: () => { this.top3Signals = []; } // fallback için boş bırak
+    });
+
+    // 2) Ardından tüm sinyaller
     this.signalService.getSignals().subscribe({
       next: (data) => {
-        console.log('API’den Gelen Veriler:', data);
-        this.signals = data;
+        this.signals = data ?? [];
+        // Fallback: top endpoint boş döndüyse local sort ile ilk 3'ü hesapla
+        if (!this.top3Signals.length && this.signals.length) {
+          this.top3Signals = [...this.signals]
+            .sort((a, b) => Number(b?.strength ?? 0) - Number(a?.strength ?? 0))
+            .slice(0, 3);
+        }
       },
       error: (err) => console.error('API Hatası:', err),
     });
   }
+
+  trackBySymbol = (_: number, item: any) => item?.symbol ?? _;
 }

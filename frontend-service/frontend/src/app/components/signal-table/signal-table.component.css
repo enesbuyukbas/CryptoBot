@@ -1,0 +1,61 @@
+/* Kart: giriş animasyonu + hover yükselme */
+.featured-card {
+  border-radius: 1rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transform: translateY(0) scale(1);
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+  animation: riseIn .6s cubic-bezier(.2,.8,.2,1) both;
+  background: #fff;
+}
+
+
+.featured-card.card:hover {
+  transform: translateY(-5px) scale(1.035) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22) !important;
+  filter: saturate(1.08) brightness(1.02);
+  cursor: pointer;
+}
+
+/* İçerik minik parıltı */
+.featured-card .card-title {
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+
+.featured-card .fs-5 {
+  font-variation-settings: "wght" 560;
+}
+
+/* Giriş animasyonu */
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.98);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* 3 kart için kademeli (staggered) gecikme */
+.row .col:nth-child(1) .featured-card { animation-delay: 40ms; }
+.row .col:nth-child(2) .featured-card { animation-delay: 120ms; }
+.row .col:nth-child(3) .featured-card { animation-delay: 200ms; }
+
+/* Badge’ler hafif yumuşasın */
+.badge {
+  border-radius: .6rem;
+  padding: .4rem .6rem;
+  font-weight: 600;
+}
+
+/* Hareketi tercih etmeyen kullanıcılar için animasyonu kapat */
+@media (prefers-reduced-motion: reduce) {
+  .featured-card {
+    animation: none;
+    transition: none;
+  }
+}

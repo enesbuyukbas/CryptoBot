@@ -1,6 +1,37 @@
 <div class="container my-4">
-  <h2 class="mb-4 text-center">Sinyaller</h2>
+   <!-- TOP 3 KARTLAR -->
+  <h2 class="mb-3">Öne Çıkan Sinyaller</h2>
+  <div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
+    <div class="col" *ngFor="let s of top3Signals; trackBy: trackBySymbol">
+      <div class="card h-100 shadow-sm border-0 featured-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <h5 class="card-title mb-1">{{ s.symbol }}</h5>
+            <span class="badge"
+                  [ngClass]="{
+                    'bg-success': s.signal_type === 'Buy',
+                    'bg-danger': s.signal_type === 'Sell',
+                    'bg-secondary': s.signal_type !== 'Buy' && s.signal_type !== 'Sell'
+                  }">
+              {{ s.signal_type }}
+            </span>
+          </div>
 
+          <div class="fs-5 fw-semibold mt-1">{{ s.price | currency:'USD' }}</div>
+          <div class="text-muted small">Strength: {{ s.strength }}</div>
+
+          <div class="mt-3 d-flex flex-wrap gap-3 small text-muted">
+            <span>ATR: {{ s.atr }}</span>
+            <span>ADX: {{ s.adx }}</span>
+            <span>ROC: {{ s.roc }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLO -->
+  <h2 class="mb-3">Sinyaller</h2>
   <div class="table-responsive shadow-sm rounded">
     <table class="table table-hover table-striped table-bordered align-middle">
       <thead class="table-dark">
@@ -19,7 +50,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let signal of signals">
+        <tr *ngFor="let signal of signals; trackBy: trackBySymbol">
           <td>{{ signal.symbol }}</td>
           <td>
             <span class="badge"
