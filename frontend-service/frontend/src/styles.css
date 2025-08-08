@@ -7,7 +7,6 @@ h2 {
 .table td, .table th {
   vertical-align: middle;
 }
-
 :root {
   --primary-color: #0d6efd;
   --secondary-color: #6c757d;
@@ -17,4 +16,38 @@ h2 {
 body {
   background-color: var(--background-color);
   font-family: 'Segoe UI', sans-serif;
+}
+
+/* Navbar ve footer için özel stil */
+.navbar-custom, .footer-custom {
+  background-color: #1A3850 !important;
+  color: #fff;
+}
+
+/* Navbar içindeki linkler */
+.navbar-custom .nav-link {
+  color: #fff !important;
+  transition: color 0.3s ease;
+}
+
+.navbar-custom .nav-link:hover {
+  color: #fff !important;
+  text-shadow: 0 0 8px rgba(255,255,255,0.6);
+}
+
+/* Marka ismi */
+.navbar-custom .navbar-brand {
+  color: #fff !important;
+  font-weight: 600;
+}
+
+
+/* Footer linkleri (varsa) */
+.footer-custom a {
+  color: #fff !important;
+  text-decoration: none;
+}
+
+.footer-custom a:hover {
+  color: #ffc107 !important;
 }
