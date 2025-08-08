@@ -1,30 +1,59 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global */
 h2 {
   font-weight: bold;
   color: #343a40;
 }
 
-.table td, .table th {
-  vertical-align: middle;
-}
 :root {
   --primary-color: #0d6efd;
   --secondary-color: #6c757d;
   --accent-color: #20c997;
   --background-color: #f8f9fa;
 }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
 body {
   background-color: var(--background-color);
   font-family: 'Segoe UI', sans-serif;
+  display: flex;               /* sticky footer için */
+  flex-direction: column;      /* sticky footer için */
 }
 
-/* Navbar ve footer için özel stil */
-.navbar-custom, .footer-custom {
+app-root {
+  min-height: 100vh;           /* ekran yüksekliği kadar */
+  display: flex;               /* sticky footer için */
+  flex-direction: column;      /* sticky footer için */
+}
+
+/* İçerik bileşenleri boşluğu doldursun ki footer aşağı insin */
+app-signal-table, main, .content {
+  flex: 1;
+}
+
+/* Footer her zaman en altta */
+footer.footer-custom {
+  margin-top: auto;            /* en alta yapıştır */
+  background-color: #1A3850 !important;
+  color: #fff;
+  padding: 1rem;
+  text-align: center;
+}
+
+/* Tablo */
+.table td, .table th {
+  vertical-align: middle;
+}
+
+/* Navbar */
+.navbar-custom {
   background-color: #1A3850 !important;
   color: #fff;
 }
 
-/* Navbar içindeki linkler */
 .navbar-custom .nav-link {
   color: #fff !important;
   transition: color 0.3s ease;
@@ -35,19 +64,27 @@ body {
   text-shadow: 0 0 8px rgba(255,255,255,0.6);
 }
 
-/* Marka ismi */
 .navbar-custom .navbar-brand {
   color: #fff !important;
   font-weight: 600;
 }
-
 
 /* Footer linkleri (varsa) */
 .footer-custom a {
   color: #fff !important;
   text-decoration: none;
 }
-
 .footer-custom a:hover {
   color: #ffc107 !important;
+}
+
+/* Badge — tek yerde toplayıp eşit genişlik + merkezledik */
+.badge {
+  display: inline-block;
+  min-width: 70px;       /* Long/Short aynı kutu genişliği */
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.4em 0.6em;
+  line-height: 1;
 }
