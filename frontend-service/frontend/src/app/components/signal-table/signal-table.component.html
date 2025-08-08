@@ -68,9 +68,9 @@
           <td>{{ signal.high }}</td>
           <td>{{ signal.low }}</td>
           <td>{{ signal.close }}</td>
-          <td>{{ signal.atr }}</td>
-          <td>{{ signal.adx }}</td>
-          <td>{{ signal.roc }}</td>
+          <td>{{ signal.atr | number:'1.0-5' }}</td>
+          <td>{{ signal.adx | number:'1.0-5' }}</td>
+          <td>{{ signal.roc | number:'1.0-5' }}</td>
         </tr>
       </tbody>
     </table>

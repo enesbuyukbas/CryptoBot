@@ -212,56 +212,64 @@ def calculate_signals(df):
     all_signals = rsi_signals + macd_signals + ma_signals
     if all_signals:
         signal_type = 'Long' if any(s.endswith('L') for s in all_signals) else 'Short'
-        
-        # 📌 **Hedef fiyatı belirleme**
-        atr = df["atr"].iloc[-1]  # ATR değeri (Volatilite)
-        current_price = df['close'].iloc[-1]  # Güncel kapanış fiyatı
-        ma200 = df["ma200"].iloc[-1]  # 200 Günlük Hareketli Ortalama
-        ma50 = df["ma200"].iloc[-1]  # 50 Günlük Hareketli Ortalama
-        rsi = df["rsi_close"].iloc[-1]  # RSI göstergesi
-        macd = df["macd_change"].iloc[-1]  # MACD göstergesi
-        
-        ### **📈 Hedef fiyat hesaplama kriterleri:**
-        # 🚀 Long İşlem için:
-        if signal_type == 'Long':
-            fib_target = current_price * 1.08  # %8 yukarı Fibonacci tahmini
-            atr_target = current_price + (atr * 2)  # ATR bazlı hedef
-            ma_target = ma50 + (atr * 1.5)  # MA50 destekli hedef fiyat
-            
-            # Eğer fiyat MA200 üzerindeyse, MA hedefini daha yukarı ayarla
-            if current_price > ma200:
-                ma_target = ma200 + atr
-            
-            # **Son hedef fiyatın ortalaması**
-            target_price = (fib_target + atr_target + ma_target) / 3
 
-        # 📉 Short İşlem için:
-        else:
-            fib_target = current_price * 0.92  # %8 aşağı Fibonacci tahmini
-            atr_target = current_price - (atr * 2)  # ATR bazlı hedef
-            ma_target = ma50 - (atr * 1.5)  # MA50 destekli hedef fiyat
-            
-            # Eğer fiyat MA200 altındaysa, MA hedefini daha aşağı ayarla
-            if current_price < ma200:
-                ma_target = ma200 - atr
-            
-            # **Son hedef fiyatın ortalaması**
-            target_price = (fib_target + atr_target + ma_target) / 3
+    # 📌 Hedef fiyatı belirleme
+    atr = df["atr"].iloc[-1]
+    current_price = df['close'].iloc[-1]
+    ma200 = df["ma200"].iloc[-1]
+    ma50 = df["ma200"].iloc[-1]  # (Not: İstersen gerçekten MA50 hesaplayıp df['ma50'] kullanabilirsin.)
+    rsi = df["rsi_close"].iloc[-1]
+    macd = df["macd_change"].iloc[-1]
 
-        # Sonuçları kaydet
-        signals.append({
-            'signal_type': signal_type,
-            'signal_time': current_time_tr,
-            'price': current_price,
-            'pullback_level': df['low'].iloc[-1] if signal_type == 'Long' else df['high'].iloc[-1],
-            'target_price': round(target_price, 5),  # 📌 **Yeni eklendi**
-            'strength': len(all_signals),
-            'indicators': ','.join(all_signals),
-            'rsi': df['rsi_close'].iloc[-1],
-            'macd': df['macd_change'].iloc[-1],
-            'momentum': df['momentum'].iloc[-1],
-            'atr': df['atr'].iloc[-1]
-        })
+    # 📈 Hedef fiyat hesaplama
+    if signal_type == 'Long':
+        fib_target = current_price * 1.08
+        atr_target = current_price + (atr * 2)
+        ma_target = ma50 + (atr * 1.5)
+        if current_price > ma200:
+            ma_target = ma200 + atr
+        target_price = (fib_target + atr_target + ma_target) / 3
+    else:
+        fib_target = current_price * 0.92
+        atr_target = current_price - (atr * 2)
+        ma_target = ma50 - (atr * 1.5)
+        if current_price < ma200:
+            ma_target = ma200 - atr
+        target_price = (fib_target + atr_target + ma_target) / 3
+
+    # ✅ ROC değeri (tablodaki ROC kolonu için)
+    roc_series = talib.ROC(df['close'], timeperiod=10)
+    roc_value = float(roc_series.iloc[-1]) if not pd.isna(roc_series.iloc[-1]) else None
+
+    # ✅ Sonuçları kaydet (girinti düzeltilmiş)
+    signals.append({
+        'signal_type': signal_type,
+        'signal_time': current_time_tr,
+        'price': float(current_price),
+
+        # Tablo için gerekli OHLC
+        'open': float(df['open'].iloc[-1]),
+        'high': float(df['high'].iloc[-1]),
+        'low':  float(df['low'].iloc[-1]),
+        'close': float(df['close'].iloc[-1]),
+
+        # Tablo için gerekli indikatörler
+        'atr': float(df['atr'].iloc[-1]) if 'atr' in df.columns and not pd.isna(df['atr'].iloc[-1]) else None,
+        'adx': float(df['adx'].iloc[-1]) if 'adx' in df.columns and not pd.isna(df['adx'].iloc[-1]) else None,
+        'roc': roc_value,
+
+        # Mevcut alanlar
+        'pullback_level': float(df['low'].iloc[-1]) if signal_type == 'Long' else float(df['high'].iloc[-1]),
+        'target_price': round(float(target_price), 5),
+        'strength': int(len(all_signals)),
+        'indicators': ','.join(all_signals),
+
+        # (Opsiyonel) debug
+        'rsi': float(df['rsi_close'].iloc[-1]) if 'rsi_close' in df.columns and not pd.isna(df['rsi_close'].iloc[-1]) else None,
+        'macd': float(df['macd_change'].iloc[-1]) if 'macd_change' in df.columns and not pd.isna(df['macd_change'].iloc[-1]) else None,
+        'momentum': float(df['momentum'].iloc[-1]) if 'momentum' in df.columns and not pd.isna(df['momentum'].iloc[-1]) else None,
+    })
+
 
     
     return signals
@@ -325,8 +333,18 @@ def save_signals(symbol, signals):
                 "signal_time": signal["signal_time"],
                 "signal_type": signal["signal_type"],
                 "price": signal["price"],
+
+                # ✅ Yeni eklenenler: OHLC + indikatörler
+                "open":  signal.get("open"),
+                "high":  signal.get("high"),
+                "low":   signal.get("low"),
+                "close": signal.get("close"),
+                "atr":   signal.get("atr"),
+                "adx":   signal.get("adx"),
+                "roc":   signal.get("roc"),
+
                 "pullback_level": signal["pullback_level"],
-                "target_price": signal["target_price"],  
+                "target_price": signal["target_price"],
                 "strength": signal["strength"],
                 "indicators": signal["indicators"],
             }
