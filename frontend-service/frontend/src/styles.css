@@ -43,10 +43,14 @@ footer.footer-custom {
   text-align: center;
 }
 
+/* ------------------------------------------------------------------------------------------------------------- */
+
 /* Tablo */
 .table td, .table th {
   vertical-align: middle;
 }
+
+/* ------------------------------------------------------------------------------------------------------------- */
 
 /* Navbar */
 .navbar-custom {
@@ -69,6 +73,82 @@ footer.footer-custom {
   font-weight: 600;
 }
 
+
+/* ------------------------------------------------------------------------------------------------------------- */
+
+
+/* Hero yüksekliğini sabitlemek ve mobil tarayıcı adres çubuğu oynaklığını çözmek için bir değişken kullanalım */
+.hero-section {
+  --hero-h: 66vh;
+  --hero-pad: clamp(16px, 2vw, 32px);
+
+  position: relative;
+  width: 100%;
+  min-height: var(--hero-h);
+  height: var(--hero-h);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  /* background removed */
+}
+
+.hero-section .hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;        /* Responsive ve oranı koruyarak doldurur */
+  object-position: center;  /* Ortala */
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Modern mobil tarayıcılarda adres çubuğu yüksekliğine uyum: svh desteği varsa kullan */
+@supports (height: 1svh) {
+  .hero-section {
+    --hero-h: 66svh;              /* small viewport height: mobilde daha stabil */
+  }
+}
+
+.hero-section .overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);     /* okunabilirlik için karartma */
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: min(900px, 92vw);
+  padding: var(--hero-pad);
+  text-align: center;
+}
+
+/* Tipografi: ekran genişliğine göre akıllı ölçeklensin */
+.hero-content h1 {
+  font-size: clamp(28px, 4vw, 56px);
+  margin-bottom: 0.75rem;
+  line-height: 1.1;
+}
+
+.hero-content p {
+  font-size: clamp(14px, 1.8vw, 20px);
+  line-height: 1.5;
+  margin: 0 auto;
+}
+
+/* Beklenmedik kelime taşmalarını engelle */
+.hero-content,
+.hero-content * {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+
+/* ------------------------------------------------------------------------------------------------------------- */
+
+
+
 /* Footer linkleri (varsa) */
 .footer-custom a {
   color: #fff !important;
@@ -77,6 +157,8 @@ footer.footer-custom {
 .footer-custom a:hover {
   color: #ffc107 !important;
 }
+
+/* ------------------------------------------------------------------------------------------------------------- */
 
 /* Badge — tek yerde toplayıp eşit genişlik + merkezledik */
 .badge {
