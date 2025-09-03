@@ -1,0 +1,131 @@
+/* Hero alanı */
+.hero-section {
+  position: relative;
+  width: 100%;
+  min-height: var(--hero-h, 66vh);
+  height: var(--hero-h, 66vh);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* Slider konteyneri */
+.hero-slider {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+}
+
+/* SLIDE’LAR ÜST ÜSTE – sadece .active olan görünür */
+.slide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s ease;
+}
+.slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Yazı bloğu */
+.hero-content {
+  max-width: min(900px, 92vw);
+  margin: 0 auto;
+  text-align: center;
+  padding: clamp(16px, 2vw, 32px);
+}
+
+/* Kart ızgarası */
+.hero-cards { width: min(1100px, 94vw); }
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+/* Kart stili */
+.metric-card {
+  background: #f6f8fb;               /* açık renk zemin */
+  border: 1px solid #e5eaf2;
+  border-radius: 16px;
+  padding: 18px;
+  color: #0f172a;                    /* koyu yazı */
+  min-height: 160px;                 /* yüksekliği artırıldı */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.1);
+}
+
+.metric-card.placeholder {
+  display: grid;
+  place-items: center;
+  opacity: .9;
+  font-size: 14px;
+}
+
+/* Kart içi elemanlar */
+.metric-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: #0b1220;
+  margin-bottom: 10px;
+}
+.metric-body { min-height: 72px; display: grid; place-items: center; }
+.metric-value { font-size: 36px; font-weight: 800; line-height: 1; }
+.metric-sub { font-size: 12px; opacity: .75; margin-top: 6px; }
+
+/* Skeleton (yüklenme) */
+.skeleton {
+  height: 48px;
+  width: 80%;
+  background: linear-gradient(90deg, #eef2f8 25%, #e7edf6 50%, #eef2f8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: 10px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Hata mesajı */
+.error { color: #b42318; font-size: 13px; }
+
+/* Slider okları */
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  background: rgba(255,255,255,.15);
+  border: 0;
+  color: #fff;
+  font-size: 22px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+.nav-btn:hover { background: rgba(255,255,255,.3); }
+.nav-btn.left { left: 10px; }
+.nav-btn.right { right: 10px; }
+
+/* Mobilde daha kompakt */
+@media (max-width: 480px) {
+  .metric-card { min-height: 130px; padding: 14px; }
+  .metric-value { font-size: 32px; }
+}
