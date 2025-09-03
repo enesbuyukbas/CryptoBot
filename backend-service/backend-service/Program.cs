@@ -1,5 +1,7 @@
 using backend_service.Models;
 using backend_service.Services;
+using backend_service.Services.Providers;   // Provider DI
+using Microsoft.Extensions.Caching.Memory;  // MemoryCache DI
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,17 +10,28 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularApp",
         policy => policy
-            .WithOrigins("http://localhost:4200") //  Angular'ýn çalýþtýðý port
+            .WithOrigins("http://localhost:4200") //  Angular'ï¿½n ï¿½alï¿½ï¿½tï¿½ï¿½ï¿½ port
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials()); // Eðer kimlik doðrulama gerekiyorsa
+            .AllowCredentials()); // Eï¿½er kimlik doï¿½rulama gerekiyorsa
 });
 
-// MongoDB Ayarlarýný Konfigürasyon Dosyasýndan Yükle
+// MongoDB Ayarlarï¿½nï¿½ Konfigï¿½rasyon Dosyasï¿½ndan Yï¿½kle
 builder.Services.Configure<MongoDBSettings>(
     builder.Configuration.GetSection("MongoDB"));
 
 builder.Services.AddSingleton<SignalService>(); // SignalService'i servislere ekle
+
+
+builder.Services.AddMemoryCache(); // MemoryCache servisini ekle
+
+//Fear & Greed provider'Ä± iÃ§in HttpClient DI
+builder.Services.AddHttpClient<IFngClient, AlternativeMeFngClient>(c =>
+{
+    c.BaseAddress = new Uri("https://api.alternative.me/");
+    c.Timeout = TimeSpan.FromSeconds(10);
+});
+
 
 // Add services to the container.
 
@@ -29,7 +42,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.UseCors("AllowAngularApp"); // CORS Politikasýný Etkinleþtir
+app.UseCors("AllowAngularApp"); // CORS Politikasï¿½nï¿½ Etkinleï¿½tir
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
