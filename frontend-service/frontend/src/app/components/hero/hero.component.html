@@ -35,9 +35,32 @@
             <ng-template #skeleton><div class="skeleton"></div></ng-template>
             <ng-template #err><div class="error">{{ error() }}</div></ng-template>
           </div>
+          <!-- FNG Card END -->
+          <!-- Market Cap kartı -->
+           <div class="metric-card">
+            <div class="metric-head">
+              <span>Global Market Cap</span>
+              <small *ngIf="market() as m">Son: {{ m.updatedAt | date:'HH:mm:ss' }}</small>
+            </div>
 
-          <!-- Yer tutucular -->
-          <div class="metric-card placeholder">Market Cap (yakında)</div>
+            <div class="metric-body" *ngIf="!loadingMcap(); else mcapSkel">
+              <ng-container *ngIf="!errorMcap(); else mcapErr">
+                <div class="metric-value">
+                  {{ market()?.value ? ('$' + short(market()?.value)) : '-' }}
+                </div>
+                <div class="metric-sub">
+                  24h:
+                  <span [style.color]="(market()?.change24h ?? 0) >= 0 ? '#16a34a' : '#b42318'">
+                    {{ (market()?.change24h ?? 0) | number:'1.0-2' }}%
+                  </span>
+                </div>
+              </ng-container>
+            </div>
+
+            <ng-template #mcapSkel><div class="skeleton"></div></ng-template>
+            <ng-template #mcapErr><div class="error">{{ errorMcap() }}</div></ng-template>
+          </div>
+          <!-- Market Cap kart END -->
           <div class="metric-card placeholder">Altseason (yakında)</div>
           <div class="metric-card placeholder">Average RSI (yakında)</div>
         </div>

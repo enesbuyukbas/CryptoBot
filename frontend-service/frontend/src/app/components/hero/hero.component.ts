@@ -19,12 +19,23 @@ export class HeroComponent {
   loading = signal(true);
   error = signal<string | null>(null);
 
+  // Market Cap verisi
+  market= signal<MetricCard | null>(null);
+  loadingMcap = signal(true);
+  errorMcap = signal<string | null>(null);
+
+
   constructor(private metrics: MetricsService) {
-    this.load();
-    setInterval(() => this.load(), 60000);
+    this.loadAll();
+    setInterval(() => this.loadAll(), 60000);
   }
 
-  private load() {
+  private loadAll() {
+    this.loadFng();
+    this.loadMarket();
+  }
+
+  private loadFng() {
     this.loading.set(true);
     this.metrics.getFng().subscribe({
       next: d => { this.fng.set(d); this.loading.set(false); this.error.set(null); },
@@ -32,7 +43,29 @@ export class HeroComponent {
     });
   }
 
+  private loadMarket() {
+    this.loadingMcap.set(true);
+    this.metrics.getMarketCap().subscribe({
+      next: d => { this.market.set(d); this.loadingMcap.set(false); this.errorMcap.set(null); },
+      error: _ => { this.errorMcap.set('Veri alınamadı'); this.loadingMcap.set(false); }
+    });
+  }
+
   go(idx: 0 | 1) { this.current.set(idx); }
   next() { this.current.set(this.current() === 0 ? 1 : 0); }
   prev() { this.current.set(this.current() === 0 ? 1 : 0); }
+
+
+  //basit kısaltma helper'ı (1.2K / 3.4M / 1.1B / 2.0T)
+  short(n?: number | null): string {
+    if (n == null) return '-';
+    const abs = Math.abs(n);
+    const sign = n < 0 ? '-' : '';
+    if (abs >= 1e12) return sign + (abs / 1e12).toFixed(2) + 'T';
+    if (abs >= 1e9)  return sign + (abs / 1e9 ).toFixed(2) + 'B';
+    if (abs >= 1e6)  return sign + (abs / 1e6 ).toFixed(2) + 'M';
+    if (abs >= 1e3)  return sign + (abs / 1e3 ).toFixed(2) + 'K';
+    return sign + abs.toFixed(0);
+  }
+
 }

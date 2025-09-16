@@ -12,9 +12,14 @@ export class MetricsService {
     return this.http.get<MetricCard>(`${this.base}/fng`);
   }
 
+  getMarketCap() {
+    return this.http.get<MetricCard>(`${this.base}/market-cap`);
+  }
+
+
   // sıradaki sprintlerde:
-  // getMarketCap() { ... }
+
   // getAltseason() { ... }
   // getAvgRsi(params) { ... }
 }
-// Compare this snippet from frontend-service/frontend/src/app/models/metric-card.model.ts:
+
