@@ -46,6 +46,22 @@ builder.Services.AddHttpClient<IAltseasonClient, CoingeckoAltseasonClient>(c =>
     c.DefaultRequestHeaders.UserAgent.ParseAdd("CryptoBot/1.0 (+https://localhost)");
 });
 
+builder.Services.AddHttpClient<IAverageRsiClient, CoingeckoAverageRsiClient>(c =>
+{
+    c.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
+    c.Timeout = TimeSpan.FromSeconds(30);
+    c.DefaultRequestVersion = new Version(2,0);
+    c.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("CryptoBot/1.0 (+https://localhost)");
+    c.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+{
+    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+    PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+    MaxConnectionsPerServer = 10
+});
+
 
 builder.Services.AddMemoryCache(); // MemoryCache servisi DI
 // Add services to the container.
