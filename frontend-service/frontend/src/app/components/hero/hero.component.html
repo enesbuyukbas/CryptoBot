@@ -1,5 +1,7 @@
-<section class="hero-section d-flex align-items-center justify-content-center text-white">
-  <img src="assets/hero_img.png" alt="" class="hero-bg">
+<section
+  class="hero-section d-flex align-items-center justify-content-center text-white"
+>
+  <img src="assets/hero_img.png" alt="" class="hero-bg" />
   <div class="overlay"></div>
 
   <!-- ÜST ÜSTE 2 SLIDE — sadece aktif olan görünür -->
@@ -7,10 +9,13 @@
     <!-- SLIDE 0: SADECE YAZI -->
     <div class="slide" [class.active]="current() === 0">
       <div class="hero-content container text-center">
-        <h1 class="display-4 fw-bold">Yatırımlarını Güçlendiren Kripto Asistanın</h1>
+        <h1 class="display-4 fw-bold">
+          Yatırımlarını Güçlendiren Kripto Asistanın
+        </h1>
         <p class="lead">
-          Kripto dünyasında hızlı değişimlere ayak uydurmak zordur. CryptoBot, piyasaları 7/24 takip ederek
-          sana en güncel sinyalleri ve analizleri sunar. Sen sadece stratejine odaklan, verileri toplamak ve
+          Kripto dünyasında hızlı değişimlere ayak uydurmak zordur. CryptoBot,
+          piyasaları 7/24 takip ederek sana en güncel sinyalleri ve analizleri
+          sunar. Sen sadece stratejine odaklan, verileri toplamak ve
           anlamlandırmak bizim işimiz.
         </p>
       </div>
@@ -24,75 +29,151 @@
           <div class="metric-card">
             <div class="metric-head">
               <span>Fear & Greed</span>
-              <small *ngIf="fng() as x">Son: {{ x.updatedAt | date:'HH:mm:ss' }}</small>
+              <small *ngIf="fng() as x"
+                >Son: {{ x.updatedAt | date : "HH:mm:ss" }}</small
+              >
             </div>
             <div class="metric-body" *ngIf="!loading(); else skeleton">
               <ng-container *ngIf="!error(); else err">
-                <div class="metric-value">{{ fng()?.value ?? '-' }}</div>
+                <div class="metric-value">{{ fng()?.value ?? "-" }}</div>
                 <div class="metric-sub">{{ fng()?.label }}</div>
               </ng-container>
             </div>
             <ng-template #skeleton><div class="skeleton"></div></ng-template>
-            <ng-template #err><div class="error">{{ error() }}</div></ng-template>
+            <ng-template #err
+              ><div class="error">{{ error() }}</div></ng-template
+            >
           </div>
           <!-- FNG Card END -->
+
           <!-- Market Cap kartı -->
-           <div class="metric-card">
+          <div class="metric-card">
             <div class="metric-head">
               <span>Global Market Cap</span>
-              <small *ngIf="market() as m">Son: {{ m.updatedAt | date:'HH:mm:ss' }}</small>
+              <small *ngIf="market() as m"
+                >Son: {{ m.updatedAt | date : "HH:mm:ss" }}</small
+              >
             </div>
 
             <div class="metric-body" *ngIf="!loadingMcap(); else mcapSkel">
               <ng-container *ngIf="!errorMcap(); else mcapErr">
                 <div class="metric-value">
-                  {{ market()?.value ? ('$' + short(market()?.value)) : '-' }}
+                  {{ market()?.value ? "$" + short(market()?.value) : "-" }}
                 </div>
                 <div class="metric-sub">
                   24h:
-                  <span [style.color]="(market()?.change24h ?? 0) >= 0 ? '#16a34a' : '#b42318'">
-                    {{ (market()?.change24h ?? 0) | number:'1.0-2' }}%
+                  <span
+                    [style.color]="
+                      (market()?.change24h ?? 0) >= 0 ? '#16a34a' : '#b42318'
+                    "
+                  >
+                    {{ market()?.change24h ?? 0 | number : "1.0-2" }}%
                   </span>
                 </div>
               </ng-container>
             </div>
 
             <ng-template #mcapSkel><div class="skeleton"></div></ng-template>
-            <ng-template #mcapErr><div class="error">{{ errorMcap() }}</div></ng-template>
+            <ng-template #mcapErr
+              ><div class="error">{{ errorMcap() }}</div></ng-template
+            >
           </div>
           <!-- Market Cap kart END -->
-           <!-- Altseason kartı -->
+
+          <!-- Altseason kartı -->
           <div class="metric-card">
             <div class="metric-head">
               <span>Altcoin Season Index</span>
-              <small *ngIf="alt() as a">Son: {{ a.updatedAt | date:'HH:mm:ss' }}</small>
+              <small *ngIf="alt() as a"
+                >Son: {{ a.updatedAt | date : "HH:mm:ss" }}</small
+              >
             </div>
-             <div class="metric-body" *ngIf="!loadingAlt(); else altSkel">
-                <ng-container *ngIf="!errorAlt(); else altErr">
-                  <div class="metric-value">{{ alt()?.value ?? '-' }}</div>
-                  <div class="metric-sub">
-                    <span
-                      class="badge"
-                      [style.background]="badgeColor(alt()?.value)"
-                      [style.color]="'#fff'"
-                      style="padding:4px 8px;border-radius:8px;font-weight:600;"
-                    >
-                      {{ badgeText(alt()?.value) }}
-                    </span>
-                  </div>
-                </ng-container>
-              </div>
-              <ng-template #altSkel><div class="skeleton"></div></ng-template>
-              <ng-template #altErr><div class="error">{{ errorAlt() }}</div></ng-template>
+            <div class="metric-body" *ngIf="!loadingAlt(); else altSkel">
+              <ng-container *ngIf="!errorAlt(); else altErr">
+                <div class="metric-value">{{ alt()?.value ?? "-" }}</div>
+                <div class="metric-sub">
+                  <span
+                    class="badge"
+                    [style.background]="badgeColor(alt()?.value)"
+                    [style.color]="'#fff'"
+                    style="
+                      padding: 4px 8px;
+                      border-radius: 8px;
+                      font-weight: 600;
+                    "
+                  >
+                    {{ badgeText(alt()?.value) }}
+                  </span>
+                </div>
+              </ng-container>
             </div>
-            <!-- Altseason kartı END -->
-          <div class="metric-card placeholder">Average RSI (yakında)</div>
+            <ng-template #altSkel><div class="skeleton"></div></ng-template>
+            <ng-template #altErr
+              ><div class="error">{{ errorAlt() }}</div></ng-template
+            >
+          </div>
+          <!-- Altseason kartı END -->
+
+          <!-- Average RSI -->
+          <div class="metric-card">
+            <div class="metric-head">
+              <span>Average Crypto RSI</span>
+              <small *ngIf="avgRsi() as r"
+                >Son: {{ r.updatedAt | date : "HH:mm:ss" }}</small
+              >
+            </div>
+
+            <div class="metric-body" *ngIf="!loadingAvgRsi(); else rsiSkel">
+              <ng-container *ngIf="!errorAvgRsi(); else rsiErr">
+                <div class="metric-value">
+                  {{ avgRsi()?.value == null ? "-" : avgRsi()?.value }}
+                </div>
+
+                <div class="metric-sub" *ngIf="avgRsi() as r">
+                  <span
+                    [ngStyle]="{
+                      background:
+                        (r.value == null ? 50 : r.value) >= 70
+                          ? '#b45309'
+                          : (r.value == null ? 50 : r.value) <= 30
+                          ? '#0ea5e9'
+                          : '#6b7280',
+                      color: '#fff'
+                    }"
+                    style="
+                      padding: 4px 8px;
+                      border-radius: 8px;
+                      font-weight: 600;
+                    "
+                  >
+                    {{
+                      (r.value == null ? 50 : r.value) >= 70
+                        ? "Overbought"
+                        : (r.value == null ? 50 : r.value) <= 30
+                        ? "Oversold"
+                        : "Neutral"
+                    }}
+                  </span>
+                </div>
+              </ng-container>
+            </div>
+
+            <ng-template #rsiSkel><div class="skeleton"></div></ng-template>
+            <ng-template #rsiErr
+              ><div class="error">{{ errorAvgRsi() }}</div></ng-template
+            >
+          </div>
+          <!-- Average RSI END -->
         </div>
       </div>
     </div>
   </div>
 
   <!-- Sağ/sol oklar -->
-  <button class="nav-btn left"  (click)="prev()" aria-label="Önceki">&#10094;</button>
-  <button class="nav-btn right" (click)="next()" aria-label="Sonraki">&#10095;</button>
+  <button class="nav-btn left" (click)="prev()" aria-label="Önceki">
+    &#10094;
+  </button>
+  <button class="nav-btn right" (click)="next()" aria-label="Sonraki">
+    &#10095;
+  </button>
 </section>

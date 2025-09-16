@@ -21,8 +21,9 @@ export class MetricsService {
 
   }
 
-  // sıradaki sprintlerde:
+  getAverageRsi() {
+    return this.http.get<MetricCard>(`${this.base}/avg-rsi`);
+  }
 
-  // getAvgRsi(params) { ... }
 }
 
