@@ -32,6 +32,13 @@ builder.Services.AddHttpClient<IFngClient, AlternativeMeFngClient>(c =>
     c.Timeout = TimeSpan.FromSeconds(10);
 });
 
+//Market Cap için CoinGecko client DI
+builder.Services.AddHttpClient<IGlobalMarketClient, CoinGeckoGlobalClient>(c =>
+{
+    c.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
+    c.Timeout = TimeSpan.FromSeconds(10);
+});
+
 
 // Add services to the container.
 

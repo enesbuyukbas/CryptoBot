@@ -14,12 +14,14 @@ namespace backend_service.Controllers
     {
         private readonly IFngClient _fng;
         private readonly IMemoryCache _cache;
+        private readonly IGlobalMarketClient _global;
         private static readonly TimeSpan Ttl = TimeSpan.FromSeconds(90);
 
-        public MetricsController(IFngClient fng, IMemoryCache cache)
+        public MetricsController(IFngClient fng, IGlobalMarketClient global, IMemoryCache cache)
         {
             _fng = fng;
             _cache = cache;
+            _global = global;
         }
 
         [HttpGet("fng")]
@@ -31,6 +33,17 @@ namespace backend_service.Controllers
                 return await _fng.GetAsync(ct);
             });
 
+            return Ok(dto);
+        }
+
+        [HttpGet("market-cap")]
+        public async Task<ActionResult<MetricCard>> GetMarketCap(CancellationToken ct)
+        {
+            var dto = await _cache.GetOrCreateAsync("metric:marketcap", async e =>
+            {
+                e.AbsoluteExpirationRelativeToNow = Ttl;
+                return await _global.GetGlobalMarketCapAsync(ct);
+            });
             return Ok(dto);
         }
     }
