@@ -23,7 +23,6 @@ builder.Services.Configure<MongoDBSettings>(
 builder.Services.AddSingleton<SignalService>(); // SignalService'i servislere ekle
 
 
-builder.Services.AddMemoryCache(); // MemoryCache servisini ekle
 
 //Fear & Greed provider'ı için HttpClient DI
 builder.Services.AddHttpClient<IFngClient, AlternativeMeFngClient>(c =>
@@ -39,7 +38,16 @@ builder.Services.AddHttpClient<IGlobalMarketClient, CoinGeckoGlobalClient>(c =>
     c.Timeout = TimeSpan.FromSeconds(10);
 });
 
+//Altseason provider'ı için HttpClient DI
+builder.Services.AddHttpClient<IAltseasonClient, CoingeckoAltseasonClient>(c =>
+{
+    c.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
+    c.Timeout = TimeSpan.FromSeconds(30);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("CryptoBot/1.0 (+https://localhost)");
+});
 
+
+builder.Services.AddMemoryCache(); // MemoryCache servisi DI
 // Add services to the container.
 
 builder.Services.AddControllers();
