@@ -61,7 +61,31 @@
             <ng-template #mcapErr><div class="error">{{ errorMcap() }}</div></ng-template>
           </div>
           <!-- Market Cap kart END -->
-          <div class="metric-card placeholder">Altseason (yakında)</div>
+           <!-- Altseason kartı -->
+          <div class="metric-card">
+            <div class="metric-head">
+              <span>Altcoin Season Index</span>
+              <small *ngIf="alt() as a">Son: {{ a.updatedAt | date:'HH:mm:ss' }}</small>
+            </div>
+             <div class="metric-body" *ngIf="!loadingAlt(); else altSkel">
+                <ng-container *ngIf="!errorAlt(); else altErr">
+                  <div class="metric-value">{{ alt()?.value ?? '-' }}</div>
+                  <div class="metric-sub">
+                    <span
+                      class="badge"
+                      [style.background]="badgeColor(alt()?.value)"
+                      [style.color]="'#fff'"
+                      style="padding:4px 8px;border-radius:8px;font-weight:600;"
+                    >
+                      {{ badgeText(alt()?.value) }}
+                    </span>
+                  </div>
+                </ng-container>
+              </div>
+              <ng-template #altSkel><div class="skeleton"></div></ng-template>
+              <ng-template #altErr><div class="error">{{ errorAlt() }}</div></ng-template>
+            </div>
+            <!-- Altseason kartı END -->
           <div class="metric-card placeholder">Average RSI (yakında)</div>
         </div>
       </div>

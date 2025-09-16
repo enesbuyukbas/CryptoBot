@@ -16,10 +16,13 @@ export class MetricsService {
     return this.http.get<MetricCard>(`${this.base}/market-cap`);
   }
 
+  getAltseason() {
+    return this.http.get<MetricCard>(`${this.base}/altseason`);
+
+  }
 
   // sıradaki sprintlerde:
 
-  // getAltseason() { ... }
   // getAvgRsi(params) { ... }
 }
 

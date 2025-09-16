@@ -24,15 +24,21 @@ export class HeroComponent {
   loadingMcap = signal(true);
   errorMcap = signal<string | null>(null);
 
+  // Altseason verisi
+  alt = signal<MetricCard | null>(null);
+  loadingAlt = signal(true);
+  errorAlt = signal<string | null>(null);
+
 
   constructor(private metrics: MetricsService) {
     this.loadAll();
-    setInterval(() => this.loadAll(), 60000);
+    setInterval(() => this.loadAll(), 60000); // 60sn de bir yenile
   }
 
   private loadAll() {
     this.loadFng();
     this.loadMarket();
+    this.loadAltseason();
   }
 
   private loadFng() {
@@ -49,6 +55,28 @@ export class HeroComponent {
       next: d => { this.market.set(d); this.loadingMcap.set(false); this.errorMcap.set(null); },
       error: _ => { this.errorMcap.set('Veri alınamadı'); this.loadingMcap.set(false); }
     });
+  }
+
+  private loadAltseason() {
+    this.loadingAlt.set(true);
+    this.metrics.getAltseason().subscribe({
+      next: d => { this.alt.set(d); this.loadingAlt.set(false); this.errorAlt.set(null); },
+      error: (err) => { console.error(err); this.errorAlt.set('Veri alınamadı'); this.loadingAlt.set(false); }
+    });
+  }
+
+  badgeText(v?: number | null): 'Altseason' | 'Bitcoin Season' | 'Neutral' {
+    if (v == null) return 'Neutral';
+    if (v >= 75) return 'Altseason';
+    if (v <= 25) return 'Bitcoin Season';
+    return 'Neutral';
+  }
+
+  badgeColor(v?: number | null): string {
+    if (v == null) return '#6b7280';      // gri
+    if (v >= 75) return '#16a34a';        // yeşil
+    if (v <= 25) return '#b42318';        // kırmızı
+    return '#6b7280';
   }
 
   go(idx: 0 | 1) { this.current.set(idx); }
