@@ -217,7 +217,7 @@ def calculate_signals(df):
     atr = df["atr"].iloc[-1]
     current_price = df['close'].iloc[-1]
     ma200 = df["ma200"].iloc[-1]
-    ma50 = df["ma200"].iloc[-1]  # (Not: İstersen gerçekten MA50 hesaplayıp df['ma50'] kullanabilirsin.)
+    ma50 = df["close"].rolling(window=50).mean().iloc[-1]  # ma50 = df["ma200"].iloc[-1] eski versiyon
     rsi = df["rsi_close"].iloc[-1]
     macd = df["macd_change"].iloc[-1]
 
