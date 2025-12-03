@@ -1,421 +1,174 @@
-import os
+#!/usr/bin/env python3
+"""
+Kripto Teknik Analiz Botu - Ana Giriş Noktası
+
+Kullanım:
+    python main.py --timeframe 15m
+    python main.py --timeframe 1h
+    python main.py --timeframe 4h
+    python main.py --timeframe 1d
+    python main.py --timeframe all
+"""
+
 import sys
-import time
-import requests
-import pandas as pd
-import numpy as np
-from datetime import datetime
-import talib
-from pymongo import MongoClient
-from bson.objectid import ObjectId
-import traceback
-
-
-# Ana dizini Python yoluna ekle
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from config import (
-    BINANCE_API_KEY,
-    BINANCE_API_SECRET,
-    SPOT_URL,
-    INTERVAL,
-    LIMIT,
-    RSI_PERIOD,
-    FAST_LENGTH,
-    SLOW_LENGTH,
-    SIGNAL_LENGTH,
-    MACD_THRESHOLDS,
-    ADX_PERIOD,
-    MONGODB_URI,
-)
-
-# MongoDB bağlantısını yap
-client = MongoClient(MONGODB_URI)
-db = client["cryptoDB"]
-
-
-def get_spot_symbols():
-    """Binance spot işlem çiftlerini çeker"""
-    max_retries = 3  # Maksimum deneme sayısı
-    retry_delay = 2  # Denemeler arası bekleme süresi (saniye)
-
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(f"{SPOT_URL}/api/v3/exchangeInfo", timeout=10)
-            response.raise_for_status()
-            data = response.json()
-
-            # Sadece USDT çiftlerini al ve aktif olanları filtrele
-            symbols = [               
-                symbol['symbol'] for symbol in data['symbols']
-                if symbol['symbol'].endswith('USDT') 
-                and symbol['status'] == 'TRADING'
-            ]
-
-            # İşlem hacmine göre sırala ve ilk 200'ü al
-            volumes = {}
-            for symbol in symbols:
-                try:
-                    # 24 saatlik işlem hacmini al
-                    for retry in range(max_retries):
-                        try:
-                            response = requests.get(
-                                f"{SPOT_URL}/api/v3/ticker/24hr",
-                                params={"symbol": symbol},
-                                timeout=10,
-                            )
-                            response.raise_for_status()
-                            volume_data = response.json()
-                            volumes[symbol] = float(volume_data["quoteVolume"])
-                            time.sleep(0.1)  # API limit aşımını önlemek için
-                            break  # Başarılı olursa döngüden çık
-                        except Exception as e:
-                            if retry == max_retries - 1:  # Son deneme başarısız olduysa
-                                print(f"Hacim verisi alınamadı - {symbol}: {e}")
-                                volumes[symbol] = 0
-                            else:
-                                time.sleep(retry_delay)
-                                continue
-                except Exception as e:
-                    print(f"Hacim verisi alınamadı - {symbol}: {e}")
-                    volumes[symbol] = 0
-
-            # Hacme göre sırala ve ilk 200'ü al
-            sorted_symbols = sorted(volumes.items(), key=lambda x: x[1], reverse=True)[
-                :200
-            ]
-            return [symbol for symbol, _ in sorted_symbols]
-
-        except Exception as e:
-            if attempt == max_retries - 1:  # Son deneme başarısız olduysa
-                print(f"Sembol listesi alınamadı: {e}")
-                return []
-            else:
-                print(
-                    f"Bağlantı hatası, yeniden deneniyor ({attempt + 1}/{max_retries})"
-                )
-                time.sleep(retry_delay)
-                continue
-
-
-
-
+import logging
+import argparse
 from datetime import datetime
 
-from datetime import datetime, timedelta
+from config import TIMEFRAMES
+from repository import init_indexes, get_top_signals_by_strength
+from jobs import run_job_for_timeframe, run_job_for_all_timeframes
 
-def fetch_price_data(symbol, interval="15m", limit=1000):
-    """Binance spot fiyat verilerini çeker"""
-    endpoint = "/api/v3/klines"  
-    params = {"symbol": symbol, "interval": interval, "limit": limit}
-
-    try:
-        fetch_time_tr = datetime.utcnow() + timedelta(hours=3)  # 🌟 Türkiye saatine çevir
-
-        response = requests.get(SPOT_URL + endpoint, params=params)
-        response.raise_for_status()
-        data = response.json()
-
-        df = pd.DataFrame(
-            data,
-            columns=[
-                "open_time",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "close_time",
-                "quote_asset_volume",
-                "number_of_trades",
-                "taker_buy_base_asset_volume",
-                "taker_buy_quote_asset_volume",
-                "ignore",
-            ],
-        )
-
-        # Veri tiplerini düzenle
-        df["open_time"] = pd.to_datetime(df["open_time"], unit="ms") + timedelta(hours=3)  # ✅ Türkiye saatine çevir
-        for col in ["open", "high", "low", "close", "volume"]:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-        df.dropna(subset=["close"], inplace=True)
-
-        df["fetch_time"] = fetch_time_tr  # ✅ Türkiye saatiyle kaydet
-
-        df["ma200"] = df["close"].rolling(window=200).mean()
-        df["rsi_close"] = talib.RSI(df["close"], timeperiod=RSI_PERIOD)
-        df["rsi_change_close"] = df["rsi_close"].diff()
-        df["adx"] = talib.ADX(df["high"], df["low"], df["close"], timeperiod=ADX_PERIOD)
-        df['+DI'] = talib.PLUS_DI(df['high'], df['low'], df['close'], timeperiod=ADX_PERIOD)
-        df['-DI'] = talib.MINUS_DI(df['high'], df['low'], df['close'], timeperiod=ADX_PERIOD)
-
-        macd, signal, hist = talib.MACD(df["close"])
-        df["macd_change"] = macd
-        df["signal_change"] = signal
-
-        df["atr"] = talib.ATR(df["high"], df["low"], df["close"], timeperiod=14)
-        df["momentum"] = df["close"].pct_change(10) * 100
-        df["ob_high"] = df["high"].rolling(window=12).max()
-        df["ob_low"] = df["low"].rolling(window=12).min()
-
-        df.set_index("open_time", inplace=True)
-        return df
-    except Exception as e:
-        print(f"Veri çekme hatası - {symbol}: {e}")
-        traceback.print_exc()  
-        return None
+logger = logging.getLogger(__name__)
 
 
-
-
-
-def initialize_db():
-    """MongoDB'ye koleksiyonları oluşturur (Atlas için güncellendi)"""
-    if "price_data" not in db.list_collection_names():
-        db.create_collection("price_data")  # Capped kaldırıldı
-
-    if "signals" not in db.list_collection_names():
-        db.create_collection("signals")  # Capped kaldırıldı
-
-
-def calculate_signals(df):
-    """Tüm teknik sinyalleri hesaplar ve hedef fiyatı belirler."""
-    signals = []
-
-    current_time_tr = (datetime.utcnow() + timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
-
-    rsi_signals = []
-    if df['rsi_change_close'].iloc[-1] > 20 and df['rsi_change_close'].iloc[-2] <= 20:
-        rsi_signals.append('C20L')
-    elif df['rsi_change_close'].iloc[-1] > 10 and df['rsi_change_close'].iloc[-2] <= 10:
-        rsi_signals.append('C10L')
-    elif df['rsi_change_close'].iloc[-1] < -20 and df['rsi_change_close'].iloc[-2] >= -20:
-        rsi_signals.append('C20S')
-    elif df['rsi_change_close'].iloc[-1] < -10 and df['rsi_change_close'].iloc[-2] >= -10:
-        rsi_signals.append('C10S')
-
-    macd_signals = []
-    for level in ['M2', 'M3', 'M4', 'M5']:
-        threshold = int(level[1])
-        if df['macd_change'].iloc[-1] > threshold and df['macd_change'].iloc[-2] <= threshold:
-            macd_signals.append(f'{level}L')
-        elif df['macd_change'].iloc[-1] < -threshold and df['macd_change'].iloc[-2] >= -threshold:
-            macd_signals.append(f'{level}S')
-
-    ma_signals = []
-    if df['close'].iloc[-1] > df['ma200'].iloc[-1] and df['close'].iloc[-2] <= df['ma200'].iloc[-2]:
-        ma_signals.append('MA200L')
-    elif df['close'].iloc[-1] < df['ma200'].iloc[-1] and df['close'].iloc[-2] >= df['ma200'].iloc[-2]:
-        ma_signals.append('MA200S')
-
-    all_signals = rsi_signals + macd_signals + ma_signals
-    if all_signals:
-        signal_type = 'Long' if any(s.endswith('L') for s in all_signals) else 'Short'
-
-    # 📌 Hedef fiyatı belirleme
-    atr = df["atr"].iloc[-1]
-    current_price = df['close'].iloc[-1]
-    ma200 = df["ma200"].iloc[-1]
-    ma50 = df["close"].rolling(window=50).mean().iloc[-1]  # ma50 = df["ma200"].iloc[-1] eski versiyon
-    rsi = df["rsi_close"].iloc[-1]
-    macd = df["macd_change"].iloc[-1]
-
-    # 📈 Hedef fiyat hesaplama
-    if signal_type == 'Long':
-        fib_target = current_price * 1.08
-        atr_target = current_price + (atr * 2)
-        ma_target = ma50 + (atr * 1.5)
-        if current_price > ma200:
-            ma_target = ma200 + atr
-        target_price = (fib_target + atr_target + ma_target) / 3
-    else:
-        fib_target = current_price * 0.92
-        atr_target = current_price - (atr * 2)
-        ma_target = ma50 - (atr * 1.5)
-        if current_price < ma200:
-            ma_target = ma200 - atr
-        target_price = (fib_target + atr_target + ma_target) / 3
-
-    # ✅ ROC değeri (tablodaki ROC kolonu için)
-    roc_series = talib.ROC(df['close'], timeperiod=10)
-    roc_value = float(roc_series.iloc[-1]) if not pd.isna(roc_series.iloc[-1]) else None
-
-    # ✅ Sonuçları kaydet (girinti düzeltilmiş)
-    signals.append({
-        'signal_type': signal_type,
-        'signal_time': current_time_tr,
-        'price': float(current_price),
-
-        # Tablo için gerekli OHLC
-        'open': float(df['open'].iloc[-1]),
-        'high': float(df['high'].iloc[-1]),
-        'low':  float(df['low'].iloc[-1]),
-        'close': float(df['close'].iloc[-1]),
-
-        # Tablo için gerekli indikatörler
-        'atr': float(df['atr'].iloc[-1]) if 'atr' in df.columns and not pd.isna(df['atr'].iloc[-1]) else None,
-        'adx': float(df['adx'].iloc[-1]) if 'adx' in df.columns and not pd.isna(df['adx'].iloc[-1]) else None,
-        'roc': roc_value,
-
-        # Mevcut alanlar
-        'pullback_level': float(df['low'].iloc[-1]) if signal_type == 'Long' else float(df['high'].iloc[-1]),
-        'target_price': round(float(target_price), 5),
-        'strength': int(len(all_signals)),
-        'indicators': ','.join(all_signals),
-
-        # (Opsiyonel) debug
-        'rsi': float(df['rsi_close'].iloc[-1]) if 'rsi_close' in df.columns and not pd.isna(df['rsi_close'].iloc[-1]) else None,
-        'macd': float(df['macd_change'].iloc[-1]) if 'macd_change' in df.columns and not pd.isna(df['macd_change'].iloc[-1]) else None,
-        'momentum': float(df['momentum'].iloc[-1]) if 'momentum' in df.columns and not pd.isna(df['momentum'].iloc[-1]) else None,
-    })
-
-
+def parse_arguments():
+    """
+    Komut satırı argümanlarını parse eder.
     
-    return signals
+    Returns:
+        Parsed arguments
+    """
+    parser = argparse.ArgumentParser(
+        description='Kripto Teknik Analiz Botu - Binance SPOT Sinyal Üretici',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Örnekler:
+  python main.py --timeframe 15m    # Sadece 15 dakikalık timeframe
+  python main.py --timeframe 1h     # Sadece 1 saatlik timeframe
+  python main.py --timeframe all    # Tüm timeframe'ler (15m, 1h, 4h, 1d)
+  
+Not:
+  - Program bir kere çalışır ve sonlanır (sonsuz döngü yok)
+  - Zamanlamayı cron veya benzeri araçlarla yapın
+  - MongoDB URI'yi .env dosyasında tanımlayın
+        """
+    )
+    
+    parser.add_argument(
+        '--timeframe',
+        type=str,
+        required=True,
+        choices=['15m', '1h', '4h', '1d', 'all'],
+        help='İşlenecek timeframe (15m, 1h, 4h, 1d veya all)'
+    )
+    
+    parser.add_argument(
+        '--show-top',
+        type=int,
+        default=10,
+        help='İşlem sonunda en güçlü N sinyali göster (varsayılan: 10)'
+    )
+    
+    return parser.parse_args()
 
 
-
-
-
-def save_price_data(symbol, df):
-    """Fiyat verilerini MongoDB'ye kaydeder"""
-    if df is None or df.empty:
-        return
-
+def show_top_signals(limit: int = 10):
+    """
+    En güçlü sinyalleri ekrana yazdırır.
+    
+    Args:
+        limit: Gösterilecek maksimum sinyal sayısı
+    """
     try:
-        last_row = df.iloc[-1:].copy()
-
-        # `open_time` sütununu datetime formatına çevir
-        last_row.index = last_row.index.astype(str)  # 🛠️ MongoDB'ye uygun hale getir
+        top_signals = get_top_signals_by_strength(limit=limit)
         
-        data_to_save = {
-            'symbol': symbol,
-            'timestamp': datetime.strptime(last_row.index[0], "%Y-%m-%d %H:%M:%S"),  # ✅ ISODate formatına çevir
-            'open': last_row['open'].iloc[0],
-            'high': last_row['high'].iloc[0],
-            'low': last_row['low'].iloc[0],
-            'close': last_row['close'].iloc[0],
-            'volume': last_row['volume'].iloc[0],
-            'ma200': last_row['ma200'].iloc[0] if 'ma200' in last_row else None,
-            'rsi_close': last_row['rsi_close'].iloc[0] if 'rsi_close' in last_row else None,
-            'rsi_change_close': last_row['rsi_change_close'].iloc[0] if 'rsi_change_close' in last_row else None,
-            'adx': last_row['adx'].iloc[0] if 'adx' in last_row else None,
-            'plus_di': last_row['+DI'].iloc[0] if '+DI' in last_row else None,
-            'minus_di': last_row['-DI'].iloc[0] if '-DI' in last_row else None,
-            'macd_change': last_row['macd_change'].iloc[0] if 'macd_change' in last_row else None,
-            'signal_change': last_row['signal_change'].iloc[0] if 'signal_change' in last_row else None,
-            'atr': last_row['atr'].iloc[0] if 'atr' in last_row else None,
-            'momentum': last_row['momentum'].iloc[0] if 'momentum' in last_row else None,
-            'ob_high': last_row['ob_high'].iloc[0] if 'ob_high' in last_row else None,
-            'ob_low': last_row['ob_low'].iloc[0] if 'ob_low' in last_row else None
-        }
+        if not top_signals:
+            logger.info("\n📊 Henüz sinyal bulunamadı.")
+            return
         
-        db.price_data.update_one(
-            {"symbol": symbol, "timestamp": data_to_save["timestamp"]},  
-            {"$set": data_to_save},
-            upsert=True  # Eğer yoksa ekle, varsa güncelle
-        )
+        logger.info(f"\n{'='*80}")
+        logger.info(f"🏆 EN GÜÇLÜ {len(top_signals)} SİNYAL:")
+        logger.info(f"{'='*80}")
+        
+        for i, sig in enumerate(top_signals, 1):
+            symbol = sig.get('symbol', 'N/A')
+            timeframe = sig.get('timeframe', 'N/A')
+            direction = sig.get('direction', 'N/A')
+            strength = sig.get('strength', 0)
+            price = sig.get('price', 0)
+            reasons = ', '.join(sig.get('reason', []))
+            
+            # Direction için emoji
+            direction_emoji = "🟢" if direction == "BUY" else "🔴" if direction == "SELL" else "⚪"
+            
+            # Güç seviyesi için bar
+            bar_length = int(strength / 5)  # 100 -> 20 karakter
+            strength_bar = "█" * bar_length + "░" * (20 - bar_length)
+            
+            logger.info(f"\n  {i}. {direction_emoji} {symbol} ({timeframe})")
+            logger.info(f"     Yön: {direction} | Güç: {strength}% {strength_bar}")
+            logger.info(f"     Fiyat: ${price:.4f}")
+            logger.info(f"     Nedenler: {reasons}")
+        
+        logger.info(f"\n{'='*80}\n")
+        
     except Exception as e:
-        print(f"Veri kaydetme hatası - {symbol}: {e}")
-
-
-
-def save_signals(symbol, signals):
-    """Sinyalleri MongoDB'ye kaydeder"""
-    if not signals:
-        return
-
-    try:
-        for signal in signals:
-            signal_data = {
-                "symbol": symbol,
-                "signal_time": signal["signal_time"],
-                "signal_type": signal["signal_type"],
-                "price": signal["price"],
-
-                # ✅ Yeni eklenenler: OHLC + indikatörler
-                "open":  signal.get("open"),
-                "high":  signal.get("high"),
-                "low":   signal.get("low"),
-                "close": signal.get("close"),
-                "atr":   signal.get("atr"),
-                "adx":   signal.get("adx"),
-                "roc":   signal.get("roc"),
-
-                "pullback_level": signal["pullback_level"],
-                "target_price": signal["target_price"],
-                "strength": signal["strength"],
-                "indicators": signal["indicators"],
-            }
-            db.signals.update_one(
-                {"symbol": symbol, "signal_time": signal_data["signal_time"]},
-                {"$set": signal_data},
-                upsert=True,  # Eğer yoksa ekle, varsa güncelle
-            )
-
-            # ✅ Debug için ekleyelim
-            print(f"✅ MongoDB'ye kaydedildi: {signal_data}")
-
-
-            # En güçlü 3 sinyali göster
-            top_signals = (
-                db.signals.find().sort([("strength", -1), ("signal_time", -1)]).limit(3)
-            )
-            if top_signals:
-                print("\n🏆 En Güçlü 3 Sinyal:")
-                for signal in top_signals:
-                    print(
-                        f"💫 {signal['symbol']} - {signal['signal_type']} (Güç: {signal['strength']}) - {signal['indicators']} - 🎯 Hedef Fiyat: {signal.get('target_price', 'Yok')}"
-                    )
-    except Exception as e:
-        print(f"❌ Sinyal kaydetme hatası - {symbol}: {e}")
-
+        logger.error(f"❌ Top sinyal gösterme hatası: {e}")
 
 
 def main():
-    """Ana program döngüsü"""
-    print("Program başlatılıyor...")
-    initialize_db()
-
-    while True:
-        try:
-            print("Spot işlem çiftleri alınıyor...")
-            symbols = get_spot_symbols()
-            print(f"Toplam {len(symbols)} çift bulundu.")
-
-            for symbol in symbols:
-                try:
-                    print(f"{symbol} için veriler çekiliyor...")
-                    df = fetch_price_data(symbol, interval="15m")
-
-                    if df is not None:
-                        # Verileri kaydet
-                        save_price_data(symbol, df)
-
-                        # Sinyalleri hesapla ve kaydet
-                        signals = calculate_signals(df)
-                        save_signals(symbol, signals)
-
-                        if signals:  # Yeni sinyal varsa bildir
-                            for signal in signals:
-                                print(
-                                    f"🔔 {symbol} - {signal['signal_type']} Sinyali @ {signal['signal_time']}"
-                                )
-
-                        print(f"✅ {symbol} için veriler güncellendi.")
-
-                    time.sleep(0.5)  # API limit aşımını önlemek için
-                except Exception as e:
-                    print(f"❌ {symbol} işlenirken hata: {e}")
-                    continue
-
-            print("Tüm veriler güncellendi. 15 dakika bekleniyor...")
-            time.sleep(900)  # 15 dakika bekle
-        except Exception as e:
-            print(f"Genel hata oluştu: {e}")
-            time.sleep(60)  # Hata durumunda 1 dakika bekle
+    """
+    Ana program giriş noktası.
+    """
+    # Başlangıç zamanı
+    start_time = datetime.now()
+    
+    logger.info(f"\n{'#'*80}")
+    logger.info(f"#  KRİPTO TEKNİK ANALİZ BOTU")
+    logger.info(f"#  Başlangıç: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"{'#'*80}\n")
+    
+    # Argümanları parse et
+    try:
+        args = parse_arguments()
+    except SystemExit:
+        return 1
+    
+    # MongoDB index'lerini oluştur
+    try:
+        logger.info("🔧 MongoDB index'leri kontrol ediliyor...")
+        init_indexes()
+        logger.info("✅ MongoDB hazır\n")
+    except Exception as e:
+        logger.error(f"❌ MongoDB başlatma hatası: {e}")
+        return 1
+    
+    # İşlemi başlat
+    try:
+        if args.timeframe == 'all':
+            # Tüm timeframe'ler için çalıştır
+            stats = run_job_for_all_timeframes(TIMEFRAMES)
+        else:
+            # Tek timeframe için çalıştır
+            stats = run_job_for_timeframe(args.timeframe)
+        
+        # En güçlü sinyalleri göster
+        if args.show_top > 0:
+            show_top_signals(limit=args.show_top)
+        
+    except KeyboardInterrupt:
+        logger.warning("\n⚠️ Program kullanıcı tarafından durduruldu (Ctrl+C)")
+        return 130
+    
+    except Exception as e:
+        logger.error(f"\n❌ Beklenmeyen hata: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+    
+    # Bitiş zamanı ve özet
+    end_time = datetime.now()
+    duration = (end_time - start_time).total_seconds()
+    
+    logger.info(f"\n{'#'*80}")
+    logger.info(f"#  İŞLEM TAMAMLANDI")
+    logger.info(f"#  Bitiş: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"#  Süre: {duration:.2f} saniye")
+    logger.info(f"{'#'*80}\n")
+    
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
