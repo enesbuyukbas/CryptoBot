@@ -1,53 +1,76 @@
-from dotenv import load_dotenv
 import os
+import logging
+from dotenv import load_dotenv
 
 # .env dosyasını yükle
 load_dotenv()
 
-# MongoDB URI'sini al
+# ================== MONGODB AYARLARI ==================
 MONGODB_URI = os.getenv("MONGODB_URI")
 
-# Binance API Key ve Secret Key ortam değişkenlerinden alınır
-BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
-BINANCE_API_SECRET = os.getenv('BINANCE_API_SECRET')
+if not MONGODB_URI:
+    raise ValueError("MONGODB_URI ortam değişkeni tanımlanmamış!")
 
-# Coin bilgileri
-SPOT_URL = os.getenv("SPOT_URL")
-INTERVAL = str(os.getenv("INTERVAL"))
-LIMIT = int(os.getenv("LIMIT"))
-FAST_LENGTH = int(os.getenv("FAST_LENGTH"))
-SLOW_LENGTH = int(os.getenv("SLOW_LENGTH"))
-SIGNAL_LENGTH = int(os.getenv("SIGNAL_LENGTH"))
-ADX_PERIOD = 14
+# ================== BINANCE API AYARLARI ==================
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY', '')
+BINANCE_API_SECRET = os.getenv('BINANCE_API_SECRET', '')
+SPOT_URL = os.getenv("SPOT_URL", "https://api.binance.com")
+
+# ================== TIMEFRAME VE SEMBOL AYARLARI ==================
+TIMEFRAMES = ["15m", "1h", "4h", "1d"]
+TOP_SYMBOL_LIMIT = 200  # İzlenecek sembol sayısı
+CANDLE_LIMIT = 200      # Çekilecek mum sayısı
+
+# ================== TEKNİK ANALİZ PARAMETRELERİ ==================
+# EMA Periyotları
+EMA_PERIODS = {
+    'EMA20': 20,
+    'EMA50': 50,
+    'EMA200': 200
+}
+
+# RSI Parametreleri
 RSI_PERIOD = 14
+RSI_OVERBOUGHT = 70
+RSI_OVERSOLD = 30
 
+# ATR Parametreleri
+ATR_PERIOD = 14
 
-MACD_THRESHOLDS = {
-    'M2': {'long': int(os.getenv('MACD_THRESHOLDS_M2_LONG')), 'short': int(os.getenv('MACD_THRESHOLDS_M2_SHORT'))},
-    'M3': {'long': int(os.getenv('MACD_THRESHOLDS_M3_LONG')), 'short': int(os.getenv('MACD_THRESHOLDS_M3_SHORT'))},
-    'M4': {'long': int(os.getenv('MACD_THRESHOLDS_M4_LONG')), 'short': int(os.getenv('MACD_THRESHOLDS_M4_SHORT'))},
-    'M5': {'long': int(os.getenv('MACD_THRESHOLDS_M5_LONG')), 'short': int(os.getenv('MACD_THRESHOLDS_M5_SHORT'))},
-}
+# ADX Parametreleri
+ADX_PERIOD = 14
+ADX_STRONG_TREND = 25
 
-# RSI eşik değerleri
-RSI_THRESHOLDS = {
-    'C20': {'long': 20, 'short': -20},
-    'C10': {'long': 10, 'short': -10}
-}
+# MACD Parametreleri
+MACD_FAST = 12
+MACD_SLOW = 26
+MACD_SIGNAL = 9
 
-# Order Block parametreleri
-OB_PERIOD = 12  # Order Block hesaplama periyodu
-ATR_PERIOD = 14  # ATR periyodu
-MOMENTUM_PERIOD = 10  # Momentum hesaplama periyodu
+# ROC Parametreleri
+ROC_PERIOD = 10
 
-# MA parametreleri
-MA_PERIODS = {
-    'MA200': 200,
-    'MA50': 50,
-    'MA20': 20
-}
+# ================== SİNYAL AYARLARI ==================
+# Sinyal gücü threshold'ları
+SIGNAL_STRENGTH_STRONG = 80
+SIGNAL_STRENGTH_MODERATE = 50
 
-UPDATE_INTERVAL = 3600  # Güncelleme aralığı (saniye)
-RETRY_DELAY = 2  # Hata durumunda bekleme süresi
-MAX_RETRIES = 3  # Maksimum yeniden deneme sayısı
-TOP_N_SYMBOLS = 200  # İzlenecek sembol sayısı
+# MongoDB'de sinyal saklama süresi (saniye)
+SIGNAL_TTL_SECONDS = 30 * 24 * 60 * 60  # 30 gün
+
+# ================== PARALEL İŞLEME AYARLARI ==================
+MAX_WORKERS = 5  # ThreadPoolExecutor için maksimum worker sayısı
+
+# ================== LOGGING AYARLARI ==================
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('crypto_bot.log', encoding='utf-8')
+    ]
+)
+
+# ================== API İSTEK AYARLARI ==================
+REQUEST_TIMEOUT = 10  # Saniye
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # Saniye
