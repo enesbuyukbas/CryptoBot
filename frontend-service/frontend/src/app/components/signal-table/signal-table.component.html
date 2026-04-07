@@ -1,79 +1,210 @@
-<div class="container my-4">
-   <!-- TOP 3 KARTLAR -->
+<div class="container-fluid my-4">
+
+  <!-- TOP 3 FEATURED CARDS -->
   <h2 class="mb-3">Öne Çıkan Sinyaller</h2>
-  <div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
+  <div class="row row-cols-1 row-cols-md-3 g-3 mb-5">
     <div class="col" *ngFor="let s of top3Signals; trackBy: trackBySymbol">
       <div class="card h-100 shadow-sm border-0 featured-card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <h5 class="card-title mb-1">{{ s.symbol }}</h5>
-            <span class="badge"
-                  [ngClass]="{
-                    'bg-success': s.signal_type?.toLowerCase() === 'long',
-                    'bg-danger':  s.signal_type?.toLowerCase() === 'short',
-                    'bg-secondary': s.signal_type && !['long','short'].includes(s.signal_type?.toLowerCase())
-                  }">
-              {{ s.signal_type }}
+            <span class="badge" [ngClass]="getDirectionClass(s.direction)">
+              {{ getDirectionLabel(s.direction) }}
             </span>
           </div>
 
-          <div class="fs-5 fw-semibold mt-1">{{ s.price | currency:'USD' }}</div>
+          <div class="fs-5 fw-semibold mt-1">{{ formatPrice(s.price) }}</div>
           <div class="text-muted small">Strength: {{ s.strength }}</div>
 
-          <div class="mt-3 d-flex flex-wrap gap-3 small text-muted">
-            <span>ATR: {{ s.atr | number:'1.0-5' }}</span>
-            <span>ADX: {{ s.adx | number:'1.0-5' }}</span>
-            <span>ROC: {{ s.roc | number:'1.0-5' }}</span>
+          <div class="mt-3 d-flex flex-wrap gap-2 small text-muted">
+            <span>Timeframe: {{ s.timeframe }}</span>
+            <span>ATR: {{ formatPrice(s.atr) }}</span>
+            <span>Target: {{ formatPrice(s.targetPrice) }}</span>
+          </div>
+
+          <div class="mt-2 small text-muted">
+            Opened: {{ formatDateTime(s.openedAt) }} <span class="badge bg-secondary">{{ getRelativeFreshness(s.openedAt) }}</span>
+          </div>
+
+          <div class="mt-2 small">
+            <strong>Reasons:</strong>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+              <span class="badge bg-info" *ngFor="let reason of s.reason">{{ reason }}</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- TABLO -->
+  <!-- FILTER SECTION -->
   <h2 class="mb-3">Sinyaller</h2>
-  <div class="table-responsive shadow-sm rounded">
+
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <!-- Timeframe Tabs -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Timeframe:</label>
+        <div class="btn-group" role="group">
+          <input type="radio" class="btn-check" name="timeframe" id="tf15m"
+                 [checked]="selectedTimeframe === '15m'"
+                 (change)="onTimeframeChange('15m')">
+          <label class="btn btn-outline-primary" for="tf15m">15m</label>
+
+          <input type="radio" class="btn-check" name="timeframe" id="tf1h"
+                 [checked]="selectedTimeframe === '1h'"
+                 (change)="onTimeframeChange('1h')">
+          <label class="btn btn-outline-primary" for="tf1h">1h</label>
+
+          <input type="radio" class="btn-check" name="timeframe" id="tf4h"
+                 [checked]="selectedTimeframe === '4h'"
+                 (change)="onTimeframeChange('4h')">
+          <label class="btn btn-outline-primary" for="tf4h">4h</label>
+
+          <input type="radio" class="btn-check" name="timeframe" id="tf1d"
+                 [checked]="selectedTimeframe === '1d'"
+                 (change)="onTimeframeChange('1d')">
+          <label class="btn btn-outline-primary" for="tf1d">1d</label>
+        </div>
+      </div>
+
+      <!-- Other Filters -->
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Symbol Search:</label>
+          <input type="text" class="form-control" placeholder="BTC, ETH, CHZ..."
+                 [(ngModel)]="symbolSearch" (change)="onSymbolSearchChange()">
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Direction:</label>
+          <select class="form-select" [(ngModel)]="selectedDirection" (change)="onDirectionChange()">
+            <option value="">All</option>
+            <option value="BUY">BUY (LONG)</option>
+            <option value="SELL">SELL (SHORT)</option>
+          </select>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Minimum Strength:</label>
+          <div class="btn-group w-100" role="group">
+            <button type="button" class="btn btn-sm"
+                    [ngClass]="{'btn-primary': minStrength === p, 'btn-outline-secondary': minStrength !== p}"
+                    *ngFor="let p of minStrengthPresets"
+                    (click)="onStrengthPresetChange(p)">
+              {{ p === 0 ? 'All' : p + '+' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Page Size:</label>
+          <select class="form-select" [(ngModel)]="pageSize" (change)="currentPage=1; loadFilteredSignals()">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div *ngIf="isLoading" class="alert alert-info">
+    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+    Loading signals...
+  </div>
+
+  <!-- MAIN TABLE -->
+  <div class="table-responsive shadow-sm rounded mb-4">
     <table class="table table-hover table-striped table-bordered align-middle text-center">
-      <thead class="table-dark" >
+      <thead class="table-dark">
         <tr>
           <th>Coin</th>
-          <th>Signal Type</th>
+          <th>Timeframe</th>
+          <th>Direction</th>
           <th>Strength</th>
           <th>Price</th>
-          <th>Open</th>
-          <th>High</th>
-          <th>Low</th>
-          <th>Close</th>
-          <th>ATR</th>
-          <th>ADX</th>
-          <th>ROC</th>
+          <th>Target</th>
+          <th>Stop Loss</th>
+          <th>Opened At</th>
+          <th>Freshness</th>
+          <th>Reasons</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let signal of signals; trackBy: trackBySymbol">
-          <td>{{ signal.symbol }}</td>
+          <td class="fw-semibold">
+            {{ signal.symbol }}
+            <div class="small mt-1" *ngIf="getActiveTimeframes(signal.symbol).length > 0">
+              <span class="badge bg-secondary" *ngFor="let tf of getActiveTimeframes(signal.symbol)">{{ tf }}</span>
+            </div>
+          </td>
+          <td>{{ signal.timeframe }}</td>
           <td>
-            <span class="badge"
-                  [ngClass]="{
-                    'bg-success': signal.signal_type?.toLowerCase() === 'long',
-                    'bg-danger':  signal.signal_type?.toLowerCase() === 'short',
-                    'bg-secondary': signal.signal_type && !['long','short'].includes(signal.signal_type?.toLowerCase())
-                   }">
-                {{ signal.signal_type }}
+            <span class="badge" [ngClass]="getDirectionClass(signal.direction)">
+              {{ getDirectionLabel(signal.direction) }}
             </span>
-
           </td>
           <td>{{ signal.strength }}</td>
-          <td>{{ signal.price | currency:'USD' }}</td>
-          <td>{{ signal.open }}</td>
-          <td>{{ signal.high }}</td>
-          <td>{{ signal.low }}</td>
-          <td>{{ signal.close }}</td>
-          <td>{{ signal.atr | number:'1.0-5' }}</td>
-          <td>{{ signal.adx | number:'1.0-5' }}</td>
-          <td>{{ signal.roc | number:'1.0-5' }}</td>
+          <td>{{ formatPrice(signal.price) }}</td>
+          <td>{{ formatPrice(signal.targetPrice) }}</td>
+          <td>{{ formatPrice(signal.stopLoss) }}</td>
+          <td class="small">{{ formatDateTime(signal.openedAt) }}</td>
+          <td class="small text-muted">{{ getRelativeFreshness(signal.openedAt) }}</td>
+          <td class="reasons-cell">
+            <span class="badge bg-info reasons-badge cursor-pointer"
+                  (click)="toggleReasonPopover(getReasonPopoverId(signal.symbol, signal.timeframe))"
+                  (blur)="closeReasonPopover()">
+              {{ getReasonSummary(signal.reason) }}
+            </span>
+            <!-- Reasons Popover -->
+            <div class="reasons-popover"
+                 *ngIf="openPopoverId === getReasonPopoverId(signal.symbol, signal.timeframe)"
+                 (click)="$event.stopPropagation()">
+              <div class="reasons-popover-header">
+                <strong>{{ signal.symbol }} - Reasons</strong>
+              </div>
+              <div class="reasons-popover-body">
+                <span *ngFor="let reason of signal.reason" class="badge bg-light text-dark reason-item">
+                  {{ reason }}
+                </span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="signals.length === 0 && !isLoading">
+          <td colspan="10" class="text-muted py-4">No signals found</td>
         </tr>
       </tbody>
     </table>
   </div>
+
+  <!-- PAGINATION -->
+  <nav aria-label="Page navigation" class="d-flex justify-content-between align-items-center">
+    <div class="text-muted small">
+      Showing {{ ((currentPage - 1) * pageSize) + 1 }} to {{ getMin(currentPage * pageSize, pagedResponse?.totalCount || 0) }}
+      of {{ pagedResponse?.totalCount || 0 }} signals
+    </div>
+
+    <ul class="pagination mb-0">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <a class="page-link" (click)="onPageChange(currentPage - 1)" href="javascript:void(0)">Previous</a>
+      </li>
+
+      <li class="page-item" *ngFor="let p of getPageNumbers()">
+        <span class="page-link" *ngIf="p === -1">...</span>
+        <a class="page-link" *ngIf="p !== -1" [class.active]="p === currentPage" (click)="onPageChange(p)" href="javascript:void(0)">
+          {{ p }}
+        </a>
+      </li>
+
+      <li class="page-item" [class.disabled]="currentPage === (pagedResponse?.totalPages || 1)">
+        <a class="page-link" (click)="onPageChange(currentPage + 1)" href="javascript:void(0)">Next</a>
+      </li>
+    </ul>
+  </nav>
+
 </div>
+

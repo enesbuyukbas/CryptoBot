@@ -1,6 +1,7 @@
 ﻿using backend_service.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 
 namespace backend_service.Services
 {
@@ -21,7 +22,118 @@ namespace backend_service.Services
         public async Task<List<Signal>> GetTopSignalsAsync() =>
             await _signalsCollection.Find(signal => true)
                 .SortByDescending(s => s.Strength)
+                .ThenByDescending(s => s.OpenedAt)
                 .Limit(3)
                 .ToListAsync();
+
+        public async Task<SignalPagedResponseDto> GetFilteredSignalsAsync(
+            string timeframe,
+            string? symbol = null,
+            string? direction = null,
+            int? minStrength = null,
+            int page = 1,
+            int pageSize = 25)
+        {
+            // Validate inputs
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 1000) pageSize = 25;
+
+            // Determine freshness window based on timeframe
+            var cutoffDate = timeframe switch
+            {
+                "15m" => DateTime.UtcNow.AddHours(-24),
+                "1h" => DateTime.UtcNow.AddDays(-3),
+                "4h" => DateTime.UtcNow.AddDays(-7),
+                "1d" => DateTime.UtcNow.AddDays(-30),
+                _ => DateTime.UtcNow.AddHours(-24) // default to 24h
+            };
+
+            // Build base filter
+            var filterBuilder = Builders<Signal>.Filter;
+            var filters = new List<FilterDefinition<Signal>>
+            {
+                filterBuilder.Eq(s => s.Timeframe, timeframe),
+                filterBuilder.Gte(s => s.OpenedAt, cutoffDate)
+            };
+
+            // Add optional filters
+            if (!string.IsNullOrEmpty(symbol))
+            {
+                filters.Add(filterBuilder.Regex(s => s.Symbol, new MongoDB.Bson.BsonRegularExpression(symbol, "i"))); // case-insensitive
+            }
+
+            if (!string.IsNullOrEmpty(direction))
+            {
+                filters.Add(filterBuilder.Eq(s => s.Direction, direction));
+            }
+
+            if (minStrength.HasValue)
+            {
+                filters.Add(filterBuilder.Gte(s => s.Strength, minStrength.Value));
+            }
+
+            var combinedFilter = filterBuilder.And(filters);
+
+            // Get all matching signals
+            var allSignals = await _signalsCollection
+                .Find(combinedFilter)
+                .ToListAsync();
+
+            // Keep only latest signal per symbol
+            var latestPerSymbol = allSignals
+                .GroupBy(s => s.Symbol)
+                .Select(g => g.OrderByDescending(s => s.OpenedAt).First())
+                .ToList();
+
+            // Sort: openedAt desc, then strength desc
+            var sorted = latestPerSymbol
+                .OrderByDescending(s => s.OpenedAt)
+                .ThenByDescending(s => s.Strength)
+                .ToList();
+
+            // Calculate pagination
+            var totalCount = sorted.Count;
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var skipCount = (page - 1) * pageSize;
+
+            // Apply pagination
+            var paginatedItems = sorted
+                .Skip(skipCount)
+                .Take(pageSize)
+                .ToList();
+
+            return new SignalPagedResponseDto
+            {
+                Items = paginatedItems.Select(MapToDto).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                Timeframe = timeframe
+            };
+        }
+
+        private SignalResponseDto MapToDto(Signal signal)
+        {
+            return new SignalResponseDto
+            {
+                Symbol = signal.Symbol,
+                Timeframe = signal.Timeframe,
+                Direction = signal.Direction,
+                Strength = signal.Strength,
+                Reason = signal.Reason,
+                Price = signal.Price,
+                StopLoss = signal.StopLoss,
+                TargetPrice = signal.TargetPrice,
+                RiskReward = signal.RiskReward,
+                RiskAmount = signal.RiskAmount,
+                RewardAmount = signal.RewardAmount,
+                Atr = signal.Atr,
+                OpenedAt = signal.OpenedAt,
+                CreatedAt = signal.CreatedAt,
+                UpdatedAt = signal.UpdatedAt
+            };
+        }
     }
 }
+

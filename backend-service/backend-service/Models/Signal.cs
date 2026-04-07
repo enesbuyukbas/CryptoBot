@@ -12,60 +12,59 @@ public class Signal
     [JsonPropertyName("symbol")]
     public string Symbol { get; set; } = default!;
 
-    [BsonElement("signal_time")]
-    [JsonPropertyName("signal_time")]
-    public string SignalTime { get; set; } = default!; // Python string kaydediyor
+    [BsonElement("timeframe")]
+    [JsonPropertyName("timeframe")]
+    public string Timeframe { get; set; } = default!;
 
-    [BsonElement("signal_type")]
-    [JsonPropertyName("signal_type")]
-    public string SignalType { get; set; } = default!;
-
-    [BsonElement("price")]
-    [JsonPropertyName("price")]
-    public double Price { get; set; }
-
-    // 🔽 Tabloya yeni eklenen alanlar
-    [BsonElement("open")]
-    [JsonPropertyName("open")]
-    public double? Open { get; set; }
-
-    [BsonElement("high")]
-    [JsonPropertyName("high")]
-    public double? High { get; set; }
-
-    [BsonElement("low")]
-    [JsonPropertyName("low")]
-    public double? Low { get; set; }
-
-    [BsonElement("close")]
-    [JsonPropertyName("close")]
-    public double? Close { get; set; }
-
-    [BsonElement("atr")]
-    [JsonPropertyName("atr")]
-    public double? Atr { get; set; }
-
-    [BsonElement("adx")]
-    [JsonPropertyName("adx")]
-    public double? Adx { get; set; }
-
-    [BsonElement("roc")]
-    [JsonPropertyName("roc")]
-    public double? Roc { get; set; }
-
-    [BsonElement("pullback_level")]
-    [JsonPropertyName("pullback_level")]
-    public double? PullbackLevel { get; set; }
-
-    [BsonElement("target_price")]
-    [JsonPropertyName("target_price")]
-    public double? TargetPrice { get; set; }
+    [BsonElement("direction")]
+    [JsonPropertyName("direction")]
+    public string Direction { get; set; } = default!;
 
     [BsonElement("strength")]
     [JsonPropertyName("strength")]
     public int Strength { get; set; }
 
-    [BsonElement("indicators")]
-    [JsonPropertyName("indicators")]
-    public string? Indicators { get; set; }
+    [BsonElement("reason")]
+    [JsonPropertyName("reason")]
+    public List<string> Reason { get; set; } = new();
+
+    [BsonElement("price")]
+    [JsonPropertyName("price")]
+    public double Price { get; set; }
+
+    [BsonElement("stop_loss")]
+    [JsonPropertyName("stop_loss")]
+    public double StopLoss { get; set; }
+
+    [BsonElement("target_price")]
+    [JsonPropertyName("target_price")]
+    public double TargetPrice { get; set; }
+
+    [BsonElement("risk_reward")]
+    [JsonPropertyName("risk_reward")]
+    public double RiskReward { get; set; }
+
+    [BsonElement("risk_amount")]
+    [JsonPropertyName("risk_amount")]
+    public double RiskAmount { get; set; }
+
+    [BsonElement("reward_amount")]
+    [JsonPropertyName("reward_amount")]
+    public double RewardAmount { get; set; }
+
+    [BsonElement("atr")]
+    [JsonPropertyName("atr")]
+    public double Atr { get; set; }
+
+    [BsonElement("opened_at")]
+    [JsonPropertyName("opened_at")]
+    public DateTime OpenedAt { get; set; }
+
+    [BsonElement("created_at")]
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+
+    [BsonElement("updated_at")]
+    [JsonPropertyName("updated_at")]
+    public DateTime UpdatedAt { get; set; }
 }

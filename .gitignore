@@ -99,3 +99,7 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# 📌 **Development Documentation (Local Only)**
+IMPLEMENTATION_AUDIT.md
+

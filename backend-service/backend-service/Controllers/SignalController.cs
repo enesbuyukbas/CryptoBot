@@ -16,17 +16,63 @@ namespace backend_service.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Signal>>> GetSignals()
+        public async Task<ActionResult<List<SignalResponseDto>>> GetSignals()
         {
             var signals = await _signalService.GetSignalsAsync();
-            return Ok(signals);
+            var dtos = signals.Select(MapToDto).ToList();
+            return Ok(dtos);
         }
 
         [HttpGet("top")]
-        public async Task<ActionResult<List<Signal>>> GetTopSignals()
+        public async Task<ActionResult<List<SignalResponseDto>>> GetTopSignals()
         {
             var topSignals = await _signalService.GetTopSignalsAsync();
-            return Ok(topSignals);
+            var dtos = topSignals.Select(MapToDto).ToList();
+            return Ok(dtos);
+        }
+
+        [HttpGet("filtered")]
+        public async Task<ActionResult<SignalPagedResponseDto>> GetFilteredSignals(
+            [FromQuery] string timeframe = "15m",
+            [FromQuery] string? symbol = null,
+            [FromQuery] string? direction = null,
+            [FromQuery] int? minStrength = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 25)
+        {
+            // Validate timeframe
+            var validTimeframes = new[] { "15m", "1h", "4h", "1d" };
+            if (!validTimeframes.Contains(timeframe))
+            {
+                return BadRequest(new { error = "Invalid timeframe. Must be: 15m, 1h, 4h, or 1d" });
+            }
+
+            var result = await _signalService.GetFilteredSignalsAsync(
+                timeframe, symbol, direction, minStrength, page, pageSize);
+
+            return Ok(result);
+        }
+
+        private SignalResponseDto MapToDto(Signal signal)
+        {
+            return new SignalResponseDto
+            {
+                Symbol = signal.Symbol,
+                Timeframe = signal.Timeframe,
+                Direction = signal.Direction,
+                Strength = signal.Strength,
+                Reason = signal.Reason,
+                Price = signal.Price,
+                StopLoss = signal.StopLoss,
+                TargetPrice = signal.TargetPrice,
+                RiskReward = signal.RiskReward,
+                RiskAmount = signal.RiskAmount,
+                RewardAmount = signal.RewardAmount,
+                Atr = signal.Atr,
+                OpenedAt = signal.OpenedAt,
+                CreatedAt = signal.CreatedAt,
+                UpdatedAt = signal.UpdatedAt
+            };
         }
     }
 }
