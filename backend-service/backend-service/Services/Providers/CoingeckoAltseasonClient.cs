@@ -26,9 +26,9 @@ namespace backend_service.Services.Providers
         };
 
         // ENV ile dev/prod ayarlanabilir
-        private static int TAKE => TryGetInt("ALTSEASON_TAKE", 50);               // Top kaç altcoin? (prod: 50)
+        private static int TAKE => TryGetInt("ALTSEASON_TAKE", 20);               // Top kaç altcoin? (prod: 20, reduced from 50 to avoid rate-limiting)
         private static int DELAY_MS => TryGetInt("ALTSEASON_DELAY_MS", 1200);     // Her coin çağrısı arası bekleme (ms)
-        private static int MAX_RETRY => TryGetInt("ALTSEASON_MAX_RETRY", 5);      // 429 için max tekrar
+        private static int MAX_RETRY => TryGetInt("ALTSEASON_MAX_RETRY", 1);      // 429 için max tekrar (reduced from 5 to fail-fast)
 
         public CoingeckoAltseasonClient(HttpClient http) => _http = http;
 

@@ -1,131 +1,424 @@
-/* Hero alanı */
+/* ==================== HERO SECTION ==================== */
 .hero-section {
   position: relative;
   width: 100%;
-  min-height: var(--hero-h, 66vh);
-  height: var(--hero-h, 66vh);
+  min-height: var(--hero-h, 55vh);
+  height: var(--hero-h, 55vh);
   display: grid;
   place-items: center;
   overflow: hidden;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
-/* Slider konteyneri */
+/* Background image */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* Dark overlay for text contrast */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  z-index: 1;
+}
+
+/* ==================== SLIDER CONTAINER ==================== */
 .hero-slider {
   position: relative;
   z-index: 2;
   width: 100%;
   height: 100%;
+  display: grid;
+  place-items: center;
 }
 
-/* SLIDE’LAR ÜST ÜSTE – sadece .active olan görünür */
+/* Individual slide */
 .slide {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
+  width: 100%;
+  height: 100%;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .35s ease;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .slide.active {
   opacity: 1;
   pointer-events: auto;
 }
 
-/* Yazı bloğu */
+/* ==================== SLIDE 1: HERO CONTENT ==================== */
 .hero-content {
-  max-width: min(900px, 92vw);
+  width: 100%;
+  max-width: min(900px, 90vw);
   margin: 0 auto;
+  padding: clamp(20px, 3vw, 40px);
   text-align: center;
-  padding: clamp(16px, 2vw, 32px);
 }
 
-/* Kart ızgarası */
-.hero-cards { width: min(1100px, 94vw); }
-.cards-grid {
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0;
+}
+
+.hero-subtitle {
+  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+  line-height: 1.6;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+/* ==================== SLIDE 2: METRICS ==================== */
+.metrics-container {
+  width: 100%;
+  max-width: min(1200px, 95vw);
+  margin: 0 auto;
+  padding: clamp(20px, 2vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.metrics-title {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+/* Metrics grid - 4 cards in 2x2 or 1x4 responsive */
+.metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(12px, 2vw, 20px);
+  width: 100%;
 }
 
-/* Kart stili */
+/* ==================== METRIC CARD ==================== */
 .metric-card {
-  background: #f6f8fb;               /* açık renk zemin */
-  border: 1px solid #e5eaf2;
-  border-radius: 16px;
-  padding: 18px;
-  color: #0f172a;                    /* koyu yazı */
-  min-height: 160px;                 /* yüksekliği artırıldı */
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: clamp(16px, 2vw, 24px);
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s ease;
+  color: #fff;
+}
+
+.metric-card:hover {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.card-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.01em;
+}
+
+.card-time {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.card-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
-  transition: transform .18s ease, box-shadow .18s ease;
-}
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.1);
+  min-height: 80px;
 }
 
-.metric-card.placeholder {
-  display: grid;
-  place-items: center;
-  opacity: .9;
-  font-size: 14px;
+.metric-value {
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
-/* Kart içi elemanlar */
-.metric-head {
+.metric-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 0.75rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-weight: 700;
-  color: #0b1220;
-  margin-bottom: 10px;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
-.metric-body { min-height: 72px; display: grid; place-items: center; }
-.metric-value { font-size: 36px; font-weight: 800; line-height: 1; }
-.metric-sub { font-size: 12px; opacity: .75; margin-top: 6px; }
 
-/* Skeleton (yüklenme) */
-.skeleton {
-  height: 48px;
-  width: 80%;
-  background: linear-gradient(90deg, #eef2f8 25%, #e7edf6 50%, #eef2f8 75%);
+.change-24h {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.change-24h.positive {
+  color: #4ade80;
+}
+
+.change-24h.negative {
+  color: #f87171;
+}
+
+.status-badge {
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+/* ==================== LOADING & ERROR STATES ==================== */
+.card-skeleton {
+  width: 100%;
+  height: 60px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 75%
+  );
   background-size: 200% 100%;
-  animation: shimmer 1.2s infinite;
-  border-radius: 10px;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
 }
+
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
-/* Hata mesajı */
-.error { color: #b42318; font-size: 13px; }
+.card-error {
+  font-size: 0.85rem;
+  color: #fca5a5;
+  font-weight: 500;
+  text-align: center;
+}
 
-/* Slider okları */
-.nav-btn {
+/* ==================== CAROUSEL NAVIGATION ==================== */
+
+/* Subtle navigation arrows */
+.nav-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 3;
-  background: rgba(255,255,255,.15);
-  border: 0;
-  color: #fff;
-  font-size: 22px;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 20px;
+  font-weight: 400;
+  border-radius: 6px;
   cursor: pointer;
-  backdrop-filter: blur(2px);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+  padding: 0;
 }
-.nav-btn:hover { background: rgba(255,255,255,.3); }
-.nav-btn.left { left: 10px; }
-.nav-btn.right { right: 10px; }
 
-/* Mobilde daha kompakt */
+.nav-arrow:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.nav-arrow:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.nav-prev {
+  left: 20px;
+}
+
+.nav-next {
+  right: 20px;
+}
+
+/* ==================== SLIDE INDICATORS (DOTS) ==================== */
+.slide-indicators {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.dot.active {
+  background: rgba(255, 255, 255, 0.9);
+  width: 28px;
+  border-radius: 5px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: 50vh;
+    height: 50vh;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+
+  .metric-card {
+    min-height: 160px;
+    padding: 12px;
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
+  }
+
+  .nav-arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .nav-prev {
+    left: 14px;
+  }
+
+  .nav-next {
+    right: 14px;
+  }
+}
+
 @media (max-width: 480px) {
-  .metric-card { min-height: 130px; padding: 14px; }
-  .metric-value { font-size: 32px; }
+  .hero-section {
+    min-height: 45vh;
+    height: 45vh;
+  }
+
+  .hero-title {
+    font-size: 1.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .metric-card {
+    min-height: 140px;
+    padding: 12px;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .card-label {
+    font-size: 0.8rem;
+  }
+
+  .nav-arrow {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .nav-prev {
+    left: 10px;
+  }
+
+  .nav-next {
+    right: 10px;
+  }
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
+  }
+
+  .metric-card {
+    transition: none;
+  }
+
+  .nav-arrow {
+    transition: none;
+  }
+
+  .dot {
+    transition: none;
+  }
+
+  .card-skeleton {
+    animation: none;
+    background: rgba(255, 255, 255, 0.15);
+  }
 }

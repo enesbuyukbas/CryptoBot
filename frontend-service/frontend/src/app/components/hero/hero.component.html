@@ -1,179 +1,158 @@
-<section
-  class="hero-section d-flex align-items-center justify-content-center text-white"
->
+<section class="hero-section d-flex align-items-center justify-content-center text-white">
   <img src="assets/hero_img.png" alt="" class="hero-bg" />
   <div class="overlay"></div>
 
-  <!-- ÜST ÜSTE 2 SLIDE — sadece aktif olan görünür -->
+  <!-- CAROUSEL: 2 SLIDES -->
   <div class="hero-slider">
-    <!-- SLIDE 0: SADECE YAZI -->
+    <!-- SLIDE 0: INTRO / BRAND -->
     <div class="slide" [class.active]="current() === 0">
-      <div class="hero-content container text-center">
-        <h1 class="display-4 fw-bold">
-          Yatırımlarını Güçlendiren Kripto Asistanın
-        </h1>
-        <p class="lead">
-          Kripto dünyasında hızlı değişimlere ayak uydurmak zordur. CryptoBot,
-          piyasaları 7/24 takip ederek sana en güncel sinyalleri ve analizleri
-          sunar. Sen sadece stratejine odaklan, verileri toplamak ve
-          anlamlandırmak bizim işimiz.
-        </p>
+      <div class="hero-content container">
+        <div class="content-wrapper">
+          <h1 class="hero-title">
+            Yatırımlarını Güçlendiren Kripto Asistanın
+          </h1>
+          <p class="hero-subtitle">
+            Kripto dünyasında hızlı değişimlere ayak uydurmak zordur. CryptoBot,
+            piyasaları 7/24 takip ederek sana en güncel sinyalleri ve analizleri
+            sunar. Sen sadece stratejine odaklan, verileri toplamak ve
+            anlamlandırmak bizim işimiz.
+          </p>
+        </div>
       </div>
     </div>
 
-    <!-- SLIDE 1: SADECE KARTLAR -->
+    <!-- SLIDE 1: METRICS CARDS -->
     <div class="slide" [class.active]="current() === 1">
-      <div class="hero-cards container">
-        <div class="cards-grid">
-          <!-- FNG Card -->
+      <div class="metrics-container container-fluid">
+        <h2 class="metrics-title">Pazar Metrikleri</h2>
+        <div class="metrics-grid">
+          <!-- Card 1: Fear & Greed -->
           <div class="metric-card">
-            <div class="metric-head">
-              <span>Fear & Greed</span>
-              <small *ngIf="fng() as x"
-                >Son: {{ x.updatedAt | date : "HH:mm:ss" }}</small
-              >
+            <div class="card-header">
+              <span class="card-label">Fear & Greed Index</span>
+              <span class="card-time" *ngIf="fng() as x">
+                {{ x.updatedAt | date: 'HH:mm:ss' }}
+              </span>
             </div>
-            <div class="metric-body" *ngIf="!loading(); else skeleton">
-              <ng-container *ngIf="!error(); else err">
-                <div class="metric-value">{{ fng()?.value ?? "-" }}</div>
-                <div class="metric-sub">{{ fng()?.label }}</div>
+
+            <div class="card-content">
+              <div *ngIf="loading()" class="card-skeleton"></div>
+              <ng-container *ngIf="!loading()">
+                <div *ngIf="!error(); else fngError">
+                  <div class="metric-value">{{ fng()?.value ?? '-' }}</div>
+                  <div class="metric-label">{{ fng()?.label }}</div>
+                </div>
+                <ng-template #fngError>
+                  <div class="card-error">{{ error() }}</div>
+                </ng-template>
               </ng-container>
             </div>
-            <ng-template #skeleton><div class="skeleton"></div></ng-template>
-            <ng-template #err
-              ><div class="error">{{ error() }}</div></ng-template
-            >
           </div>
-          <!-- FNG Card END -->
 
-          <!-- Market Cap kartı -->
+          <!-- Card 2: Global Market Cap -->
           <div class="metric-card">
-            <div class="metric-head">
-              <span>Global Market Cap</span>
-              <small *ngIf="market() as m"
-                >Son: {{ m.updatedAt | date : "HH:mm:ss" }}</small
-              >
+            <div class="card-header">
+              <span class="card-label">Global Market Cap</span>
+              <span class="card-time" *ngIf="market() as m">
+                {{ m.updatedAt | date: 'HH:mm:ss' }}
+              </span>
             </div>
 
-            <div class="metric-body" *ngIf="!loadingMcap(); else mcapSkel">
-              <ng-container *ngIf="!errorMcap(); else mcapErr">
-                <div class="metric-value">
-                  {{ market()?.value ? "$" + short(market()?.value) : "-" }}
+            <div class="card-content">
+              <div *ngIf="loadingMcap()" class="card-skeleton"></div>
+              <ng-container *ngIf="!loadingMcap()">
+                <div *ngIf="!errorMcap(); else mcapError">
+                  <div class="metric-value">
+                    {{ market()?.value ? '$' + short(market()?.value) : '-' }}
+                  </div>
+                  <div class="metric-label">
+                    <span class="change-24h"
+                      [class.positive]="(market()?.change24h ?? 0) >= 0"
+                      [class.negative]="(market()?.change24h ?? 0) < 0">
+                      {{ (market()?.change24h ?? 0) | number: '1.0-2' }}% (24h)
+                    </span>
+                  </div>
                 </div>
-                <div class="metric-sub">
-                  24h:
-                  <span
-                    [style.color]="
-                      (market()?.change24h ?? 0) >= 0 ? '#16a34a' : '#b42318'
-                    "
-                  >
-                    {{ market()?.change24h ?? 0 | number : "1.0-2" }}%
-                  </span>
-                </div>
+                <ng-template #mcapError>
+                  <div class="card-error">{{ errorMcap() }}</div>
+                </ng-template>
               </ng-container>
             </div>
-
-            <ng-template #mcapSkel><div class="skeleton"></div></ng-template>
-            <ng-template #mcapErr
-              ><div class="error">{{ errorMcap() }}</div></ng-template
-            >
           </div>
-          <!-- Market Cap kart END -->
 
-          <!-- Altseason kartı -->
+          <!-- Card 3: Altseason Index -->
           <div class="metric-card">
-            <div class="metric-head">
-              <span>Altcoin Season Index</span>
-              <small *ngIf="alt() as a"
-                >Son: {{ a.updatedAt | date : "HH:mm:ss" }}</small
-              >
+            <div class="card-header">
+              <span class="card-label">Altcoin Season Index</span>
+              <span class="card-time" *ngIf="alt() as a">
+                {{ a.updatedAt | date: 'HH:mm:ss' }}
+              </span>
             </div>
-            <div class="metric-body" *ngIf="!loadingAlt(); else altSkel">
-              <ng-container *ngIf="!errorAlt(); else altErr">
-                <div class="metric-value">{{ alt()?.value ?? "-" }}</div>
-                <div class="metric-sub">
-                  <span
-                    class="badge"
-                    [style.background]="badgeColor(alt()?.value)"
-                    [style.color]="'#fff'"
-                    style="
-                      padding: 4px 8px;
-                      border-radius: 8px;
-                      font-weight: 600;
-                    "
-                  >
-                    {{ badgeText(alt()?.value) }}
-                  </span>
+
+            <div class="card-content">
+              <div *ngIf="loadingAlt()" class="card-skeleton"></div>
+              <ng-container *ngIf="!loadingAlt()">
+                <div *ngIf="!errorAlt(); else altError">
+                  <div class="metric-value">{{ alt()?.value ?? '-' }}</div>
+                  <div class="metric-label">
+                    <span class="status-badge"
+                      [style.background]="badgeColor(alt()?.value)"
+                      [style.color]="'#fff'">
+                      {{ badgeText(alt()?.value) }}
+                    </span>
+                  </div>
                 </div>
+                <ng-template #altError>
+                  <div class="card-error">{{ errorAlt() }}</div>
+                </ng-template>
               </ng-container>
             </div>
-            <ng-template #altSkel><div class="skeleton"></div></ng-template>
-            <ng-template #altErr
-              ><div class="error">{{ errorAlt() }}</div></ng-template
-            >
           </div>
-          <!-- Altseason kartı END -->
 
-          <!-- Average RSI -->
+          <!-- Card 4: Average RSI -->
           <div class="metric-card">
-            <div class="metric-head">
-              <span>Average Crypto RSI</span>
-              <small *ngIf="avgRsi() as r"
-                >Son: {{ r.updatedAt | date : "HH:mm:ss" }}</small
-              >
+            <div class="card-header">
+              <span class="card-label">Average Crypto RSI</span>
+              <span class="card-time" *ngIf="avgRsi() as r">
+                {{ r.updatedAt | date: 'HH:mm:ss' }}
+              </span>
             </div>
 
-            <div class="metric-body" *ngIf="!loadingAvgRsi(); else rsiSkel">
-              <ng-container *ngIf="!errorAvgRsi(); else rsiErr">
-                <div class="metric-value">
-                  {{ avgRsi()?.value == null ? "-" : avgRsi()?.value }}
+            <div class="card-content">
+              <div *ngIf="loadingAvgRsi()" class="card-skeleton"></div>
+              <ng-container *ngIf="!loadingAvgRsi()">
+                <div *ngIf="!errorAvgRsi(); else rsiError">
+                  <div class="metric-value">{{ avgRsi()?.value == null ? '-' : avgRsi()?.value }}</div>
+                  <div class="metric-label">
+                    <span class="status-badge"
+                      [style.background]="getRsiBgColor(avgRsi()?.value)"
+                      [style.color]="'#fff'">
+                      {{ getRsiLabel(avgRsi()?.value) }}
+                    </span>
+                  </div>
                 </div>
-
-                <div class="metric-sub" *ngIf="avgRsi() as r">
-                  <span
-                    [ngStyle]="{
-                      background:
-                        (r.value == null ? 50 : r.value) >= 70
-                          ? '#b45309'
-                          : (r.value == null ? 50 : r.value) <= 30
-                          ? '#0ea5e9'
-                          : '#6b7280',
-                      color: '#fff'
-                    }"
-                    style="
-                      padding: 4px 8px;
-                      border-radius: 8px;
-                      font-weight: 600;
-                    "
-                  >
-                    {{
-                      (r.value == null ? 50 : r.value) >= 70
-                        ? "Overbought"
-                        : (r.value == null ? 50 : r.value) <= 30
-                        ? "Oversold"
-                        : "Neutral"
-                    }}
-                  </span>
-                </div>
+                <ng-template #rsiError>
+                  <div class="card-error">{{ errorAvgRsi() }}</div>
+                </ng-template>
               </ng-container>
             </div>
-
-            <ng-template #rsiSkel><div class="skeleton"></div></ng-template>
-            <ng-template #rsiErr
-              ><div class="error">{{ errorAvgRsi() }}</div></ng-template
-            >
           </div>
-          <!-- Average RSI END -->
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Sağ/sol oklar -->
-  <button class="nav-btn left" (click)="prev()" aria-label="Önceki">
-    &#10094;
+  <!-- Carousel Navigation: Arrows (subtle) -->
+  <button class="nav-arrow nav-prev" (click)="prev()" aria-label="Önceki Slayt" title="Önceki">
+    ‹
   </button>
-  <button class="nav-btn right" (click)="next()" aria-label="Sonraki">
-    &#10095;
+  <button class="nav-arrow nav-next" (click)="next()" aria-label="Sonraki Slayt" title="Sonraki">
+    ›
   </button>
+
+  <!-- Slide Indicators (dots) -->
+  <div class="slide-indicators">
+    <button class="dot" [class.active]="current() === 0" (click)="go(0)" aria-label="Slayt 1"></button>
+    <button class="dot" [class.active]="current() === 1" (click)="go(1)" aria-label="Slayt 2"></button>
+  </div>
 </section>

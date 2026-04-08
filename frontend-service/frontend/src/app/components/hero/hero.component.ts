@@ -97,6 +97,22 @@ export class HeroComponent {
   next() { this.current.set(this.current() === 0 ? 1 : 0); }
   prev() { this.current.set(this.current() === 0 ? 1 : 0); }
 
+  // RSI status label
+  getRsiLabel(v?: number | null): string {
+    if (v == null) return 'Neutral';
+    if (v >= 70) return 'Overbought';
+    if (v <= 30) return 'Oversold';
+    return 'Neutral';
+  }
+
+  // RSI background color
+  getRsiBgColor(v?: number | null): string {
+    if (v == null) return '#6b7280';       // gray
+    if (v >= 70) return '#b45309';         // orange (overbought)
+    if (v <= 30) return '#0ea5e9';         // cyan (oversold)
+    return '#6b7280';                      // gray (neutral)
+  }
+
 
   //basit kısaltma helper'ı (1.2K / 3.4M / 1.1B / 2.0T)
   short(n?: number | null): string {

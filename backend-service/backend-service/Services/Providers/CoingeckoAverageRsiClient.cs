@@ -26,9 +26,9 @@ namespace backend_service.Services.Providers
         };
 
         // ENV ile ayarlanabilir
-        private static int TAKE => TryGetInt("AVGRSI_TAKE", 10);            // kaç coin? (prod: 10)
+        private static int TAKE => TryGetInt("AVGRSI_TAKE", 5);             // kaç coin? (prod: 5, reduced from 10 to avoid rate-limiting)
         private static int DELAY_MS => TryGetInt("AVGRSI_DELAY_MS", 800);   // her çağrı arası bekleme
-        private static int MAX_RETRY => TryGetInt("AVGRSI_MAX_RETRY", 5);   // 429 max retry
+        private static int MAX_RETRY => TryGetInt("AVGRSI_MAX_RETRY", 1);   // 429 max retry (reduced from 5 to fail-fast)
         private const int RSI_PERIOD = 14;
         // CoinGecko OHLC: /coins/{id}/ohlc?vs_currency=usd&days=...  (1,7,14,30,90,180,365,max)
         private const int DAYS = 90; // RSI için yeterli

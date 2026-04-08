@@ -36,6 +36,7 @@ builder.Services.AddHttpClient<IGlobalMarketClient, CoinGeckoGlobalClient>(c =>
 {
     c.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
     c.Timeout = TimeSpan.FromSeconds(10);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("CryptoBot/1.0 (+https://localhost)");
 });
 
 //Altseason provider'ı için HttpClient DI
