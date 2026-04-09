@@ -117,18 +117,17 @@
 
 /* Reasons Popover - Dark Theme */
 .reasons-popover {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 8px;
+  position: fixed;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  z-index: 1050;
-  min-width: 200px;
+  z-index: 9999;
+  min-width: 220px;
   max-width: 300px;
   animation: popoverIn .2s ease;
+  pointer-events: auto;
+  transform: translateX(-50%);
 }
 
 @keyframes popoverIn {
@@ -300,12 +299,24 @@
 /* ============================================
    PAGINATION STYLING - Professional Dark Theme
    ============================================ */
+.pagination-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0;
+  margin-top: 8px;
+  gap: 12px;
+}
+
 .pagination {
   display: flex;
   list-style: none;
   padding: 0;
   margin: 0;
   gap: 0.25rem;
+  justify-content: center;
 }
 
 .page-item {

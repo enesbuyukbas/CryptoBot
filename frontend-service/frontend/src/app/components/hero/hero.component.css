@@ -399,6 +399,432 @@
   }
 }
 
+/* ==================== CARD-SPECIFIC STYLING ==================== */
+
+/* Base card styling with accent borders */
+.metric-card {
+  position: relative;
+  border-left: 3px solid transparent;
+  min-height: 200px;
+}
+
+/* Fear & Greed Card */
+.metric-card--fng {
+  border-left-color: #ef4444;
+}
+
+.metric-card--fng:hover {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
+/* Market Cap Card */
+.metric-card--mcap {
+  border-left-color: #3b82f6;
+}
+
+.metric-card--mcap:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+/* Altseason Card */
+.metric-card--alt {
+  border-left-color: #8b5cf6;
+}
+
+.metric-card--alt:hover {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+}
+
+/* RSI Card */
+.metric-card--rsi {
+  border-left-color: #eab308;
+}
+
+.metric-card--rsi:hover {
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.15);
+}
+
+/* ==================== FNG GAUGE STYLING ==================== */
+.fng-gauge-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-height: 120px;
+}
+
+.fng-gauge {
+  width: 100%;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+/* Gauge paths */
+.gauge-bg {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+.gauge-segment {
+  transition: stroke-opacity 0.3s ease;
+}
+
+.gauge-segment--extreme-fear {
+  stroke: #ef4444;
+}
+
+.gauge-segment--fear {
+  stroke: #f97316;
+}
+
+.gauge-segment--neutral {
+  stroke: #eab308;
+}
+
+.gauge-segment--greed {
+  stroke: #22c55e;
+}
+
+.gauge-segment--extreme-greed {
+  stroke: #16a34a;
+}
+
+/* Needle styling */
+.gauge-needle {
+  stroke: rgba(255, 255, 255, 0.85);
+  transition: stroke 0.3s ease;
+}
+
+.gauge-needle-center {
+  fill: rgba(255, 255, 255, 0.85);
+}
+
+.fng-value-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.fng-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.fng-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+/* ==================== MARKET CAP CHART STYLING ==================== */
+.mcap-chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 100px;
+}
+
+.mcap-chart {
+  width: 100%;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.chart-bar {
+  fill: rgba(59, 130, 246, 0.4);
+  transition: all 0.3s ease;
+  rx: 2;
+}
+
+.chart-bar.active {
+  fill: #3b82f6;
+  opacity: 1;
+}
+
+.chart-bar:hover {
+  fill: #60a5fa;
+  opacity: 1;
+}
+
+.mcap-value-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mcap-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.mcap-change {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mcap-change.positive {
+  color: #4ade80;
+}
+
+.mcap-change.negative {
+  color: #f87171;
+}
+
+/* ==================== ALTSEASON PROGRESS BAR STYLING ==================== */
+.alt-progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 110px;
+}
+
+.metric-chart-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.metric-chart-labels-top {
+  min-height: 20px;
+}
+
+.metric-chart-labels-bottom {
+  min-height: 20px;
+}
+
+.alt-labels-top {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.alt-label-left,
+.alt-label-right {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.alt-progress-bar {
+  width: 100%;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.progress-zone {
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+.progress-zone--bitcoin {
+  fill: #b45309;
+}
+
+.progress-zone--neutral {
+  fill: #6b7280;
+}
+
+.progress-zone--altseason {
+  fill: #8b5cf6;
+}
+
+/* Progress indicator */
+.progress-indicator {
+  stroke: rgba(255, 255, 255, 0.9);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.progress-dot {
+  fill: rgba(255, 255, 255, 0.9);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.alt-value-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.alt-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.alt-status-badge {
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ==================== RSI COLOR SCALE STYLING ==================== */
+.rsi-scale-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 110px;
+}
+
+.rsi-scale-bar {
+  width: 100%;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.rsi-zone {
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.rsi-zone--oversold {
+  fill: #0ea5e9;
+}
+
+.rsi-zone--neutral {
+  fill: #6b7280;
+}
+
+.rsi-zone--overbought {
+  fill: #ef4444;
+}
+
+/* RSI cursor indicator */
+.rsi-cursor {
+  stroke: rgba(255, 255, 255, 0.9);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rsi-cursor-dot {
+  fill: rgba(255, 255, 255, 0.9);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rsi-zone-labels {
+  display: flex;
+  justify-content: space-around;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.rsi-label-zone {
+  flex: 1;
+  text-align: center;
+}
+
+.rsi-value-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rsi-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.rsi-status-badge {
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ==================== RESPONSIVE SVG ADJUSTMENTS ==================== */
+@media (max-width: 768px) {
+  .metric-card {
+    min-height: 180px;
+  }
+
+  .fng-gauge {
+    height: 70px;
+  }
+
+  .mcap-chart {
+    height: 50px;
+  }
+
+  .alt-progress-bar,
+  .rsi-scale-bar {
+    height: 30px;
+  }
+
+  .fng-value,
+  .mcap-value,
+  .alt-value,
+  .rsi-value {
+    font-size: 1.2rem;
+  }
+
+  .fng-label {
+    font-size: 0.7rem;
+  }
+
+  .alt-labels-top,
+  .rsi-zone-labels {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .metric-card {
+    min-height: 160px;
+    border-left-width: 2px;
+  }
+
+  .fng-gauge {
+    height: 60px;
+  }
+
+  .mcap-chart {
+    height: 45px;
+  }
+
+  .alt-progress-bar,
+  .rsi-scale-bar {
+    height: 24px;
+  }
+
+  .fng-value,
+  .mcap-value,
+  .alt-value,
+  .rsi-value {
+    font-size: 1rem;
+  }
+
+  .fng-label {
+    font-size: 0.65rem;
+  }
+
+  .alt-labels-top,
+  .rsi-zone-labels {
+    font-size: 0.55rem;
+  }
+
+  .alt-status-badge,
+  .rsi-status-badge {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.7rem;
+  }
+}
+
 /* Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .slide {

@@ -200,29 +200,43 @@ export class SignalTableComponent implements OnInit {
 
   // Reason labels mapping (English code → Turkish label)
   private reasonLabels: { [key: string]: string } = {
-    // Trend kategorisi
+    // Trend
     'TREND_PERFECT': 'Trend Mükemmel',
     'TREND_UP': 'Trend Yükseliyor',
+    'TREND_DOWN': 'Trend Düşüyor',
+    'TREND_STRONG': 'Trend Güçlü',
+    'TREND_WEAK': 'Trend Zayıf',
 
-    // Momentum kategorisi
+    // Momentum
     'MOMENTUM_STRONG': 'Momentum Güçlü',
     'MOMENTUM_GOOD': 'Momentum İyi',
+    'MOMENTUM_WEAK': 'Momentum Zayıf',
+    'MOMENTUM_BULLISH': 'Momentum Yükseliş',
+    'MOMENTUM_BEARISH': 'Momentum Düşüş',
 
-    // ADX kategorisi
+    // ADX
     'ADX_VERY_STRONG': 'Çok Güçlü',
     'ADX_STRONG': 'Güçlü Sinyal',
     'ADX_MODERATE': 'Orta Sinyal',
+    'ADX_WEAK': 'Zayıf Sinyal',
 
-    // RSI kategorisi
+    // RSI
     'RSI_OPTIMAL': 'RSI İdeal',
     'RSI_HEALTHY': 'RSI Sağlıklı',
+    'RSI_OVERSOLD': 'RSI Aşırı Satım',
+    'RSI_OVERBOUGHT': 'RSI Aşırı Alım',
+    'RSI_NEUTRAL': 'RSI Nötr',
 
-    // MACD kategorisi
+    // MACD
     'MACD_BULLISH': 'MACD Yükseliş',
+    'MACD_BEARISH': 'MACD Düşüş',
     'MACD_CROSS_UP': 'MACD Kesişim ↑',
+    'MACD_CROSS_DOWN': 'MACD Kesişim ↓',
 
-    // Volume kategorisi
-    'VOLUME_HIGH': 'Hacim Yüksek'
+    // Volume
+    'VOLUME_HIGH': 'Hacim Yüksek',
+    'VOLUME_LOW': 'Hacim Düşük',
+    'VOLUME_SPIKE': 'Hacim Patlaması'
   };
 
   // Reason color mapping by category
@@ -265,9 +279,17 @@ export class SignalTableComponent implements OnInit {
     return 'badge-secondary';
   }
 
-  // Get Turkish label for reason code
+  // Get Turkish label for reason code with fallback
   getReasonLabel(reason: string): string {
-    return this.reasonLabels[reason] || reason;
+    if (this.reasonLabels[reason]) {
+      return this.reasonLabels[reason];
+    }
+    // Fallback: replace underscores with spaces and capitalize
+    return reason
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   }
 
   // Get category of reason (TREND, MOMENTUM, ADX, RSI, MACD, VOLUME)
@@ -364,17 +386,46 @@ export class SignalTableComponent implements OnInit {
 
   trackBySymbol = (_: number, item: Signal) => item?.symbol ?? _;
 
+  // Popover position for fixed positioning
+  popoverPosition: { top: string; left: string } | null = null;
+
   // Popover methods for reasons display
-  toggleReasonPopover(popoverId: string): void {
-    this.openPopoverId = this.openPopoverId === popoverId ? null : popoverId;
+  toggleReasonPopover(popoverId: string, event?: Event): void {
+    if (event && event.target && this.openPopoverId !== popoverId) {
+      const element = event.target as HTMLElement;
+      const rect = element.getBoundingClientRect();
+
+      // Position popover below the badge, centered on badge
+      // Popover width is 220-300px, use ~260px as average
+      const popoverWidth = 260;
+      const centerX = rect.left + rect.width / 2 - popoverWidth / 2;
+
+      this.popoverPosition = {
+        top: (rect.bottom + 8) + 'px',
+        left: centerX + 'px'
+      };
+      this.openPopoverId = popoverId;
+    } else {
+      this.openPopoverId = null;
+      this.popoverPosition = null;
+    }
   }
 
   closeReasonPopover(): void {
     this.openPopoverId = null;
+    this.popoverPosition = null;
   }
 
   getReasonPopoverId(symbol: string, timeframe: string): string {
     return `reasons-${symbol}-${timeframe}`;
+  }
+
+  // Get color for strength value
+  getStrengthColor(strength?: number | null): string {
+    if (strength == null) return '#94a3b8';
+    if (strength >= 80) return '#00d395';  // Green - strong signal
+    if (strength >= 60) return '#eab308';  // Yellow - moderate signal
+    return '#94a3b8';                      // Gray - weak signal
   }
 }
 

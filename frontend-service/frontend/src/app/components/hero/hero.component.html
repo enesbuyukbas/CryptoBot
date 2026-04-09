@@ -26,8 +26,8 @@
       <div class="metrics-container container-fluid">
         <h2 class="metrics-title">Pazar Metrikleri</h2>
         <div class="metrics-grid">
-          <!-- Card 1: Fear & Greed -->
-          <div class="metric-card">
+          <!-- Card 1: Fear & Greed Gauge -->
+          <div class="metric-card metric-card--fng">
             <div class="card-header">
               <span class="card-label">Fear & Greed Index</span>
               <span class="card-time" *ngIf="fng() as x">
@@ -38,9 +38,37 @@
             <div class="card-content">
               <div *ngIf="loading()" class="card-skeleton"></div>
               <ng-container *ngIf="!loading()">
-                <div *ngIf="!error(); else fngError">
-                  <div class="metric-value">{{ fng()?.value ?? '-' }}</div>
-                  <div class="metric-label">{{ fng()?.label }}</div>
+                <div *ngIf="!error(); else fngError" class="fng-gauge-wrapper">
+                  <!-- Semicircle Gauge SVG -->
+                  <svg class="fng-gauge" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                    <!-- Background arc -->
+                    <path class="gauge-bg"
+                      d="M 20 100 A 80 80 0 0 1 180 100"
+                      fill="none" stroke-width="8" stroke-linecap="round" />
+
+                    <!-- Colored segments -->
+                    <path class="gauge-segment gauge-segment--extreme-fear"
+                      d="M 20 100 A 80 80 0 0 1 60 30" fill="none" stroke-width="8" stroke-linecap="round" />
+                    <path class="gauge-segment gauge-segment--fear"
+                      d="M 60 30 A 80 80 0 0 1 100 20" fill="none" stroke-width="8" stroke-linecap="round" />
+                    <path class="gauge-segment gauge-segment--neutral"
+                      d="M 100 20 A 80 80 0 0 1 140 30" fill="none" stroke-width="8" stroke-linecap="round" />
+                    <path class="gauge-segment gauge-segment--greed"
+                      d="M 140 30 A 80 80 0 0 1 170 60" fill="none" stroke-width="8" stroke-linecap="round" />
+                    <path class="gauge-segment gauge-segment--extreme-greed"
+                      d="M 170 60 A 80 80 0 0 1 180 100" fill="none" stroke-width="8" stroke-linecap="round" />
+
+                    <!-- Needle -->
+                    <g [attr.transform]="'rotate(' + calculateFngNeedle(fng()?.value) + ' 100 100)'">
+                      <line class="gauge-needle" x1="100" y1="100" x2="100" y2="25" stroke-width="3" />
+                      <circle class="gauge-needle-center" cx="100" cy="100" r="5" />
+                    </g>
+                  </svg>
+
+                  <div class="fng-value-box">
+                    <div class="fng-value">{{ fng()?.value ?? '-' }}</div>
+                    <div class="fng-label">{{ getFngLabel(fng()?.value) }}</div>
+                  </div>
                 </div>
                 <ng-template #fngError>
                   <div class="card-error">{{ error() }}</div>
@@ -49,8 +77,8 @@
             </div>
           </div>
 
-          <!-- Card 2: Global Market Cap -->
-          <div class="metric-card">
+          <!-- Card 2: Global Market Cap Bar Chart -->
+          <div class="metric-card metric-card--mcap">
             <div class="card-header">
               <span class="card-label">Global Market Cap</span>
               <span class="card-time" *ngIf="market() as m">
@@ -61,16 +89,28 @@
             <div class="card-content">
               <div *ngIf="loadingMcap()" class="card-skeleton"></div>
               <ng-container *ngIf="!loadingMcap()">
-                <div *ngIf="!errorMcap(); else mcapError">
-                  <div class="metric-value">
-                    {{ market()?.value ? '$' + short(market()?.value) : '-' }}
-                  </div>
-                  <div class="metric-label">
-                    <span class="change-24h"
+                <div *ngIf="!errorMcap(); else mcapError" class="mcap-chart-wrapper">
+                  <!-- 7-Day Bar Chart -->
+                  <svg class="mcap-chart" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+                    <g class="chart-bars">
+                      <rect class="chart-bar"
+                        *ngFor="let bar of getMcapBars(); let i = index"
+                        [attr.x]="10 + i * 26"
+                        [attr.y]="100 - (bar * 80)"
+                        [attr.width]="20"
+                        [attr.height]="bar * 80"
+                        [class.active]="i === 6"
+                        [style.opacity]="0.6 + (i * 0.06)" />
+                    </g>
+                  </svg>
+
+                  <div class="mcap-value-box">
+                    <div class="mcap-value">{{ market()?.value ? '$' + short(market()?.value) : '-' }}</div>
+                    <div class="mcap-change"
                       [class.positive]="(market()?.change24h ?? 0) >= 0"
                       [class.negative]="(market()?.change24h ?? 0) < 0">
                       {{ (market()?.change24h ?? 0) | number: '1.0-2' }}% (24h)
-                    </span>
+                    </div>
                   </div>
                 </div>
                 <ng-template #mcapError>
@@ -80,8 +120,8 @@
             </div>
           </div>
 
-          <!-- Card 3: Altseason Index -->
-          <div class="metric-card">
+          <!-- Card 3: Altcoin Season Progress Bar -->
+          <div class="metric-card metric-card--alt">
             <div class="card-header">
               <span class="card-label">Altcoin Season Index</span>
               <span class="card-time" *ngIf="alt() as a">
@@ -92,14 +132,47 @@
             <div class="card-content">
               <div *ngIf="loadingAlt()" class="card-skeleton"></div>
               <ng-container *ngIf="!loadingAlt()">
-                <div *ngIf="!errorAlt(); else altError">
-                  <div class="metric-value">{{ alt()?.value ?? '-' }}</div>
-                  <div class="metric-label">
-                    <span class="status-badge"
+                <div *ngIf="!errorAlt(); else altError" class="alt-progress-wrapper">
+                  <!-- Chart area with consistent spacing -->
+                  <div class="metric-chart-area">
+                    <!-- Top labels -->
+                    <div class="metric-chart-labels-top">
+                      <div class="alt-labels-top">
+                        <span class="alt-label-left">Bitcoin</span>
+                        <span class="alt-label-right">Altcoins</span>
+                      </div>
+                    </div>
+
+                    <!-- Bar -->
+                    <svg class="alt-progress-bar" viewBox="0 0 200 12" preserveAspectRatio="xMidYMid meet">
+                      <!-- Bitcoin zone (0-25) -->
+                      <rect class="progress-zone progress-zone--bitcoin"
+                        x="0" y="0" width="50" height="12" rx="3" />
+                      <!-- Neutral zone (25-75) -->
+                      <rect class="progress-zone progress-zone--neutral"
+                        x="50" y="0" width="100" height="12" rx="3" />
+                      <!-- Altseason zone (75-100) -->
+                      <rect class="progress-zone progress-zone--altseason"
+                        x="150" y="0" width="50" height="12" rx="3" />
+
+                      <!-- Current position indicator -->
+                      <g [attr.transform]="'translate(' + calculateAltProgress(alt()?.value) + ' 0)'">
+                        <line class="progress-indicator" x1="0" y1="-6" x2="0" y2="18" stroke-width="2" [style.stroke]="getAltProgressColor(alt()?.value)" />
+                        <circle class="progress-dot" cx="0" cy="6" r="4" [style.fill]="getAltProgressColor(alt()?.value)" />
+                      </g>
+                    </svg>
+
+                    <!-- Bottom labels (empty space for alignment with RSI) -->
+                    <div class="metric-chart-labels-bottom"></div>
+                  </div>
+
+                  <div class="alt-value-box">
+                    <div class="alt-value">{{ alt()?.value ?? '-' }}</div>
+                    <div class="alt-status-badge"
                       [style.background]="badgeColor(alt()?.value)"
                       [style.color]="'#fff'">
                       {{ badgeText(alt()?.value) }}
-                    </span>
+                    </div>
                   </div>
                 </div>
                 <ng-template #altError>
@@ -109,8 +182,8 @@
             </div>
           </div>
 
-          <!-- Card 4: Average RSI -->
-          <div class="metric-card">
+          <!-- Card 4: Average RSI Color Scale -->
+          <div class="metric-card metric-card--rsi">
             <div class="card-header">
               <span class="card-label">Average Crypto RSI</span>
               <span class="card-time" *ngIf="avgRsi() as r">
@@ -121,14 +194,48 @@
             <div class="card-content">
               <div *ngIf="loadingAvgRsi()" class="card-skeleton"></div>
               <ng-container *ngIf="!loadingAvgRsi()">
-                <div *ngIf="!errorAvgRsi(); else rsiError">
-                  <div class="metric-value">{{ avgRsi()?.value == null ? '-' : avgRsi()?.value }}</div>
-                  <div class="metric-label">
-                    <span class="status-badge"
+                <div *ngIf="!errorAvgRsi(); else rsiError" class="rsi-scale-wrapper">
+                  <!-- Chart area with consistent spacing -->
+                  <div class="metric-chart-area">
+                    <!-- Top labels (empty space for alignment with Altseason) -->
+                    <div class="metric-chart-labels-top"></div>
+
+                    <!-- Bar -->
+                    <svg class="rsi-scale-bar" viewBox="0 0 200 36" preserveAspectRatio="xMidYMid meet">
+                      <!-- Oversold zone (cyan, 0-30) -->
+                      <rect class="rsi-zone rsi-zone--oversold"
+                        x="0" y="4" width="60" height="12" rx="2" />
+                      <!-- Neutral zone (gray, 30-70) -->
+                      <rect class="rsi-zone rsi-zone--neutral"
+                        x="60" y="4" width="80" height="12" rx="2" />
+                      <!-- Overbought zone (red, 70-100) -->
+                      <rect class="rsi-zone rsi-zone--overbought"
+                        x="140" y="4" width="60" height="12" rx="2" />
+
+                      <!-- Current value indicator -->
+                      <g [attr.transform]="'translate(' + calculateRsiPosition(avgRsi()?.value) + ' 0)'">
+                        <line class="rsi-cursor" x1="0" y1="-4" x2="0" y2="20" stroke-width="2" />
+                        <circle class="rsi-cursor-dot" cx="0" cy="10" r="3" />
+                      </g>
+                    </svg>
+
+                    <!-- Bottom labels -->
+                    <div class="metric-chart-labels-bottom">
+                      <div class="rsi-zone-labels">
+                        <span class="rsi-label-zone">Oversold</span>
+                        <span class="rsi-label-zone">Neutral</span>
+                        <span class="rsi-label-zone">Overbought</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="rsi-value-box">
+                    <div class="rsi-value">{{ avgRsi()?.value == null ? '-' : avgRsi()?.value }}</div>
+                    <div class="rsi-status-badge"
                       [style.background]="getRsiBgColor(avgRsi()?.value)"
                       [style.color]="'#fff'">
                       {{ getRsiLabel(avgRsi()?.value) }}
-                    </span>
+                    </div>
                   </div>
                 </div>
                 <ng-template #rsiError>

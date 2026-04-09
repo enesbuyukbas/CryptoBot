@@ -126,4 +126,74 @@ export class HeroComponent {
     return sign + abs.toFixed(0);
   }
 
+  // ==================== SVG HELPER METHODS ====================
+
+  /**
+   * Calculate needle rotation for FNG gauge (0-100 → -90 to +90 degrees)
+   * 0 = left (-90°), 50 = middle (0°), 100 = right (+90°)
+   */
+  calculateFngNeedle(value?: number | null): number {
+    if (value == null) return -90;
+    const normalized = Math.max(0, Math.min(100, value));
+    return -90 + (normalized * 1.8); // 0-100 → -90 to +90 (semicircle from left to right)
+  }
+
+  /**
+   * Get Fear & Greed label based on value
+   */
+  getFngLabel(value?: number | null): string {
+    if (value == null) return 'Nötr';
+    if (value <= 25) return 'Aşırı Korku';
+    if (value <= 45) return 'Korku';
+    if (value <= 55) return 'Nötr';
+    if (value <= 75) return 'Açgözlülük';
+    return 'Aşırı Açgözlülük';
+  }
+
+  /**
+   * Get progress dot color based on altseason value
+   */
+  getAltProgressColor(value?: number | null): string {
+    if (value == null) return '#6b7280';
+    if (value >= 75) return '#8b5cf6';  // Purple - Altcoin Season
+    if (value >= 25) return '#eab308';  // Yellow - Mixed
+    return '#f97316';                    // Orange - Bitcoin dominant
+  }
+
+  /**
+   * Generate 7 bar heights for market cap chart (0-100 scale)
+   * Last bar represents current value, others are simulated previous values
+   */
+  getMcapBars(): number[] {
+    const currentValue = this.market()?.value ?? 1;
+    // Simulated 7-day data (normalized to 0-1 range)
+    const baseValue = currentValue * 0.95;
+    return [
+      0.5 + Math.random() * 0.4,  // Day 1
+      0.55 + Math.random() * 0.35, // Day 2
+      0.6 + Math.random() * 0.3,   // Day 3
+      0.58 + Math.random() * 0.32, // Day 4
+      0.65 + Math.random() * 0.25, // Day 5
+      0.7 + Math.random() * 0.2,   // Day 6
+      1.0  // Day 7 (current, always highest)
+    ];
+  }
+
+  /**
+   * Calculate progress bar position for Altseason (0-100 scale, maps to 0-200 SVG units)
+   */
+  calculateAltProgress(value?: number | null): number {
+    if (value == null) return 100;
+    const normalized = Math.max(0, Math.min(100, value));
+    return (normalized / 100) * 200;
+  }
+
+  /**
+   * Calculate RSI cursor position (0-100 scale, maps to 0-200 SVG units)
+   */
+  calculateRsiPosition(value?: number | null): number {
+    if (value == null) return 100;
+    const normalized = Math.max(0, Math.min(100, value));
+    return (normalized / 100) * 200;
+  }
 }
