@@ -27,9 +27,9 @@
           </div>
 
           <div class="mt-2 small">
-            <strong>Reasons:</strong>
+            <strong style="color: var(--text-secondary); font-size: 12px;">Reasons:</strong>
             <div class="d-flex flex-wrap gap-1 mt-1">
-              <span class="badge bg-info" *ngFor="let reason of s.reason">{{ reason }}</span>
+              <span class="reason-badge" [ngClass]="getReasonBadgeClass(reason)" [ngStyle]="getReasonBadgeStyle(reason)" *ngFor="let reason of s.reason">{{ getReasonLabel(reason) }}</span>
             </div>
           </div>
         </div>
@@ -138,7 +138,7 @@
           <td class="fw-semibold">
             {{ signal.symbol }}
             <div class="small mt-1" *ngIf="getActiveTimeframes(signal.symbol).length > 0">
-              <span class="badge bg-secondary" *ngFor="let tf of getActiveTimeframes(signal.symbol)">{{ tf }}</span>
+              <span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary); border-radius: 6px; padding: 2px 8px; font-size: 11px; margin: 2px;" *ngFor="let tf of getActiveTimeframes(signal.symbol)">{{ tf }}</span>
             </div>
           </td>
           <td>{{ signal.timeframe }}</td>
@@ -152,9 +152,9 @@
           <td>{{ formatPrice(signal.targetPrice) }}</td>
           <td>{{ formatPrice(signal.stopLoss) }}</td>
           <td class="small">{{ formatDateTime(signal.openedAt) }}</td>
-          <td class="small text-muted">{{ getRelativeFreshness(signal.openedAt) }}</td>
+          <td class="small">{{ getRelativeFreshness(signal.openedAt) }}</td>
           <td class="reasons-cell">
-            <span class="badge bg-info reasons-badge cursor-pointer"
+            <span class="reasons-badge cursor-pointer" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);"
                   (click)="toggleReasonPopover(getReasonPopoverId(signal.symbol, signal.timeframe))"
                   (blur)="closeReasonPopover()">
               {{ getReasonSummary(signal.reason) }}
@@ -167,8 +167,8 @@
                 <strong>{{ signal.symbol }} - Reasons</strong>
               </div>
               <div class="reasons-popover-body">
-                <span *ngFor="let reason of signal.reason" class="badge bg-light text-dark reason-item">
-                  {{ reason }}
+                <span *ngFor="let reason of signal.reason" class="reason-badge" [ngClass]="getReasonBadgeClass(reason)" [ngStyle]="getReasonBadgeStyle(reason)">
+                  {{ getReasonLabel(reason) }}
                 </span>
               </div>
             </div>

@@ -198,16 +198,110 @@ export class SignalTableComponent implements OnInit {
     return direction === 'BUY' ? 'LONG' : direction === 'SELL' ? 'SHORT' : direction;
   }
 
+  // Reason labels mapping (English code → Turkish label)
+  private reasonLabels: { [key: string]: string } = {
+    // Trend kategorisi
+    'TREND_PERFECT': 'Trend Mükemmel',
+    'TREND_UP': 'Trend Yükseliyor',
+
+    // Momentum kategorisi
+    'MOMENTUM_STRONG': 'Momentum Güçlü',
+    'MOMENTUM_GOOD': 'Momentum İyi',
+
+    // ADX kategorisi
+    'ADX_VERY_STRONG': 'Çok Güçlü',
+    'ADX_STRONG': 'Güçlü Sinyal',
+    'ADX_MODERATE': 'Orta Sinyal',
+
+    // RSI kategorisi
+    'RSI_OPTIMAL': 'RSI İdeal',
+    'RSI_HEALTHY': 'RSI Sağlıklı',
+
+    // MACD kategorisi
+    'MACD_BULLISH': 'MACD Yükseliş',
+    'MACD_CROSS_UP': 'MACD Kesişim ↑',
+
+    // Volume kategorisi
+    'VOLUME_HIGH': 'Hacim Yüksek'
+  };
+
+  // Reason color mapping by category
+  private reasonColors: { [key: string]: { bg: string; color: string; border: string } } = {
+    TREND: {
+      bg: 'rgba(0, 211, 149, 0.12)',
+      color: '#00d395',
+      border: 'rgba(0, 211, 149, 0.25)'
+    },
+    MOMENTUM: {
+      bg: 'rgba(139, 92, 246, 0.12)',
+      color: '#a78bfa',
+      border: 'rgba(139, 92, 246, 0.25)'
+    },
+    ADX: {
+      bg: 'rgba(251, 146, 60, 0.12)',
+      color: '#fb923c',
+      border: 'rgba(251, 146, 60, 0.25)'
+    },
+    RSI: {
+      bg: 'rgba(250, 204, 21, 0.12)',
+      color: '#fbbf24',
+      border: 'rgba(250, 204, 21, 0.25)'
+    },
+    MACD: {
+      bg: 'rgba(56, 189, 248, 0.12)',
+      color: '#38bdf8',
+      border: 'rgba(56, 189, 248, 0.25)'
+    },
+    VOLUME: {
+      bg: 'rgba(244, 114, 182, 0.12)',
+      color: '#f472b6',
+      border: 'rgba(244, 114, 182, 0.25)'
+    }
+  };
+
   getDirectionClass(direction: string): string {
-    if (direction === 'BUY') return 'bg-success';
-    if (direction === 'SELL') return 'bg-danger';
-    return 'bg-secondary';
+    if (direction === 'BUY') return 'badge-success';
+    if (direction === 'SELL') return 'badge-danger';
+    return 'badge-secondary';
+  }
+
+  // Get Turkish label for reason code
+  getReasonLabel(reason: string): string {
+    return this.reasonLabels[reason] || reason;
+  }
+
+  // Get category of reason (TREND, MOMENTUM, ADX, RSI, MACD, VOLUME)
+  getReasonCategory(reason: string): string {
+    if (reason.startsWith('TREND')) return 'TREND';
+    if (reason.startsWith('MOMENTUM')) return 'MOMENTUM';
+    if (reason.startsWith('ADX')) return 'ADX';
+    if (reason.startsWith('RSI')) return 'RSI';
+    if (reason.startsWith('MACD')) return 'MACD';
+    if (reason.startsWith('VOLUME')) return 'VOLUME';
+    return 'MACD'; // default
+  }
+
+  // Get CSS class for reason badge based on category
+  getReasonBadgeClass(reason: string): string {
+    const category = this.getReasonCategory(reason);
+    return `reason-badge-${category.toLowerCase()}`;
+  }
+
+  // Get inline styles for reason badge
+  getReasonBadgeStyle(reason: string) {
+    const category = this.getReasonCategory(reason);
+    const colors = this.reasonColors[category];
+    return {
+      background: colors.bg,
+      color: colors.color,
+      borderColor: colors.border
+    };
   }
 
   getReasonSummary(reasons: string[]): string {
     if (!reasons || reasons.length === 0) return '-';
-    if (reasons.length === 1) return reasons[0];
-    return `${reasons[0]} +${reasons.length - 1}`;
+    if (reasons.length === 1) return this.getReasonLabel(reasons[0]);
+    return `${this.getReasonLabel(reasons[0])} +${reasons.length - 1}`;
   }
 
   getReasonTooltip(reasons: string[]): string {

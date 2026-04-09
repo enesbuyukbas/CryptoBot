@@ -1,29 +1,38 @@
-/* Kart: giriş animasyonu + hover yükselme */
+/* Featured Cards - Professional Dark Theme */
 .featured-card {
   border-radius: 1rem;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
   transform: translateY(0) scale(1);
   transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
   animation: riseIn .6s cubic-bezier(.2,.8,.2,1) both;
-  background: #fff;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 1rem;
 }
-
 
 .featured-card.card:hover {
   transform: translateY(-5px) scale(1.035) !important;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22) !important;
-  filter: saturate(1.08) brightness(1.02);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2) !important;
+  border-color: var(--accent-cyan);
+  filter: brightness(1.05);
   cursor: pointer;
 }
 
-/* İçerik minik parıltı */
+/* İçerik */
 .featured-card .card-title {
   font-weight: 600;
   letter-spacing: .2px;
+  color: var(--text-primary);
+}
+
+.featured-card .card-text {
+  color: var(--text-secondary);
 }
 
 .featured-card .fs-5 {
-  font-variation-settings: "wght" 560;
+  font-weight: 700;
+  color: var(--accent-cyan);
 }
 
 /* Giriş animasyonu */
@@ -45,11 +54,31 @@
 .row .col:nth-child(2) .featured-card { animation-delay: 120ms; }
 .row .col:nth-child(3) .featured-card { animation-delay: 200ms; }
 
-/* Badge’ler hafif yumuşasın */
+/* Badge'ler - Professional Dark Theme */
 .badge {
   border-radius: .6rem;
   padding: .4rem .6rem;
   font-weight: 600;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.badge-success {
+  background: rgba(0, 211, 149, 0.15);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 211, 149, 0.3);
+}
+
+.badge-danger {
+  background: rgba(255, 71, 87, 0.15);
+  color: var(--accent-red);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.badge-primary {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--accent-blue);
+  border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
 /* Hareketi tercih etmeyen kullanıcılar için animasyonu kapat */
@@ -60,18 +89,25 @@
   }
 }
 
-/* Improved Tooltip for Reasons Badge */
+/* Reasons Badge - Dark Theme */
 .reasons-badge {
   position: relative;
   cursor: pointer;
   transition: all .2s ease;
   user-select: none;
+  background: rgba(6, 182, 212, 0.15) !important;
+  color: var(--accent-blue) !important;
+  border: 1px solid rgba(6, 182, 212, 0.3) !important;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
 }
 
 .reasons-badge:hover {
-  background-color: #0d6efd !important;
+  background: rgba(6, 182, 212, 0.25) !important;
+  border-color: var(--accent-cyan) !important;
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
 }
 
 /* Reasons Cell - Container for badge and popover */
@@ -79,16 +115,16 @@
   position: relative;
 }
 
-/* Reasons Popover */
+/* Reasons Popover - Dark Theme */
 .reasons-popover {
   position: absolute;
   top: 100%;
   left: 0;
   margin-top: 8px;
-  background: #fff;
-  border: 1px solid #dee2e6;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 0.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   z-index: 1050;
   min-width: 200px;
   max-width: 300px;
@@ -108,9 +144,10 @@
 
 .reasons-popover-header {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border-color);
   font-size: 0.875rem;
-  background-color: #f8f9fa;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
 }
 
 .reasons-popover-body {
@@ -125,6 +162,9 @@
   padding: 0.4rem 0.6rem;
   border-radius: 0.3rem;
   white-space: nowrap;
+  background: rgba(0, 180, 216, 0.15);
+  color: var(--accent-blue);
+  border: 1px solid rgba(0, 180, 216, 0.3);
 }
 
 /* Respects prefers-reduced-motion */
@@ -132,6 +172,692 @@
   .reasons-popover {
     animation: none;
   }
+}
+
+/* ============================================
+   TABLE STYLING - Professional Dark Theme
+   ============================================ */
+.table {
+  background: transparent;
+  color: var(--text-primary);
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 0;
+}
+
+/* Table Header */
+.table thead {
+  background: var(--bg-primary);
+}
+
+.table thead th {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-color: var(--border-color);
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+/* Table Body */
+.table tbody {
+  background: transparent;
+}
+
+.table tbody td {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  padding: 0.875rem 0.75rem;
+  vertical-align: middle;
+  background: var(--bg-secondary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Alternating Row Colors */
+.table tbody tr:nth-child(odd) td {
+  background: var(--bg-secondary);
+}
+
+.table tbody tr:nth-child(even) td {
+  background: rgba(17, 34, 64, 0.5);
+}
+
+/* Hover Effect */
+.table tbody tr:hover td {
+  background-color: var(--bg-tertiary);
+  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.1);
+}
+
+/* Coin Name - Bold */
+.table tbody td:first-child {
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Direction Badges in Table */
+.table .badge-success {
+  background: rgba(0, 211, 149, 0.15);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 211, 149, 0.3);
+}
+
+.table .badge-danger {
+  background: rgba(255, 71, 87, 0.15);
+  color: var(--accent-red);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+/* Striped Rows - if using .table-striped */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  background: var(--bg-secondary);
+}
+
+.table-striped > tbody > tr:nth-of-type(even) > * {
+  background: rgba(17, 34, 64, 0.5);
+}
+
+/* Table Hover Effect */
+.table-hover tbody tr:hover {
+  background-color: transparent;
+}
+
+.table-hover tbody tr:hover > td {
+  background-color: var(--bg-tertiary);
+  cursor: pointer;
+}
+
+/* Table Border */
+.table-bordered {
+  border-color: var(--border-color);
+}
+
+.table-bordered > thead > tr > th,
+.table-bordered > thead > tr > td,
+.table-bordered > tbody > tr > th,
+.table-bordered > tbody > tr > td {
+  border-color: var(--border-color);
+}
+
+/* Responsive Table Container */
+.table-responsive {
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.table-responsive .table {
+  margin: 0;
+}
+
+/* ============================================
+   PAGINATION STYLING - Professional Dark Theme
+   ============================================ */
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0.25rem;
+}
+
+.page-item {
+  display: inline-block;
+}
+
+.page-item.disabled .page-link {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--border-color);
+}
+
+.page-link {
+  position: relative;
+  display: block;
+  padding: 0.5rem 0.75rem;
+  margin-left: 0;
+  line-height: 1.25;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-weight: 500;
+  min-width: 40px;
+  text-align: center;
+}
+
+.page-link:hover:not(.disabled) {
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.1);
+  border-color: var(--accent-cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(6, 182, 212, 0.1);
+}
+
+.page-link:focus {
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.1);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+}
+
+/* Active Page */
+.page-item.active .page-link {
+  z-index: 3;
+  color: white;
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  font-weight: 600;
+}
+
+.page-item.active .page-link:hover {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  filter: brightness(1.1);
+}
+
+/* ============================================
+   FILTER TOOLBAR STYLING - Professional Dark Theme
+   ============================================ */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.form-label {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Timeframe & Strength Button Groups */
+.btn-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-check:checked + .btn,
+.btn.active {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  color: white;
+  box-shadow: 0 4px 8px rgba(6, 182, 212, 0.2);
+}
+
+.btn {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn:hover {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.05);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.btn-outline-primary {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-outline-primary:hover {
+  background: transparent;
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+}
+
+.btn-outline-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-outline-secondary:hover {
+  background: rgba(6, 182, 212, 0.05);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+}
+
+.btn-primary {
+  background: var(--accent-cyan);
+  color: white;
+  border-color: var(--accent-cyan);
+}
+
+.btn-primary:hover {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  filter: brightness(1.15);
+}
+
+/* Input Fields & Select Dropdowns */
+.form-control,
+.form-select {
+  background: var(--input-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background: var(--input-bg);
+  color: var(--text-primary);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+  outline: none;
+}
+
+/* Select Dropdown - (Arrow Color) */
+.form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+  padding-right: 2.5rem;
+}
+
+/* Alert Styling */
+.alert {
+  background: rgba(6, 182, 212, 0.1);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.alert-info {
+  background: rgba(6, 182, 212, 0.1);
+  color: var(--accent-cyan);
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.spinner-border-sm {
+  color: var(--accent-cyan);
+}
+
+/* ============================================
+   REASON BADGE COLOR SYSTEM - Problem 3 Fix
+   ============================================ */
+
+/* Common reason badge styling */
+.reason-badge {
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid;
+  display: inline-block;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.reason-badge:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
+}
+
+/* TREND - Yeşil (Green) */
+.reason-badge-trend {
+  background: rgba(0, 211, 149, 0.12) !important;
+  color: #00d395 !important;
+  border-color: rgba(0, 211, 149, 0.25) !important;
+}
+
+/* MOMENTUM - Mor (Purple) */
+.reason-badge-momentum {
+  background: rgba(139, 92, 246, 0.12) !important;
+  color: #a78bfa !important;
+  border-color: rgba(139, 92, 246, 0.25) !important;
+}
+
+/* ADX - Turuncu (Orange) */
+.reason-badge-adx {
+  background: rgba(251, 146, 60, 0.12) !important;
+  color: #fb923c !important;
+  border-color: rgba(251, 146, 60, 0.25) !important;
+}
+
+/* RSI - Sarı (Yellow) */
+.reason-badge-rsi {
+  background: rgba(250, 204, 21, 0.12) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(250, 204, 21, 0.25) !important;
+}
+
+/* MACD - Mavi (Blue) */
+.reason-badge-macd {
+  background: rgba(56, 189, 248, 0.12) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+}
+
+/* VOLUME - Pembe/Fuşya (Pink) */
+.reason-badge-volume {
+  background: rgba(244, 114, 182, 0.12) !important;
+  color: #f472b6 !important;
+  border-color: rgba(244, 114, 182, 0.25) !important;
+}
+
+/* ============================================
+   PROBLEM 1 FIX: Filter Panel Specific Styling
+   ============================================ */
+
+/* Ensure card body has proper text color and spacing */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-body {
+  padding: 20px 24px;
+}
+
+/* Form labels fix - Make sure they're readable */
+.form-label {
+  color: var(--text-secondary);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* Input and select styling */
+.form-control,
+.form-select {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background: var(--input-bg);
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+  outline: none;
+}
+
+/* Button styling for timeframe and strength */
+.btn {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn:hover {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.05);
+}
+
+/* Active button (checked radio) */
+.btn-check:checked + .btn {
+  background: var(--accent-cyan);
+  color: white;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 4px 8px rgba(6, 182, 212, 0.2);
+}
+
+/* ============================================
+   PROBLEM 2 FIX: Table Content Readability
+   ============================================ */
+
+/* Table wrapper - transparent for dark background to show */
+.table-responsive {
+  background: transparent;
+  border-radius: 12px;
+  border: none;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+/* Table header styling */
+.table thead {
+  background: #0a1628;
+}
+
+.table thead th {
+  background: #0a1628;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+/* Table body rows */
+.table tbody tr {
+  background: transparent;
+  border: none;
+}
+
+.table tbody tr:nth-child(odd) {
+  background: #0f1e30;
+}
+
+.table tbody tr:nth-child(even) {
+  background: var(--bg-secondary);
+}
+
+.table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+/* Table cells */
+.table tbody td {
+  color: var(--text-primary);
+  border: none;
+  border-bottom: 1px solid #1a2f4a;
+  padding: 0.875rem 0.75rem;
+  vertical-align: middle;
+  background: inherit;
+}
+
+/* Coin name - bold white */
+.table tbody td:first-child {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+/* Numeric values - monospace, secondary color */
+.table tbody td:nth-child(4),  /* Strength */
+.table tbody td:nth-child(5),  /* Price */
+.table tbody td:nth-child(6),  /* Target */
+.table tbody td:nth-child(7)   /* Stop Loss */
+{
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
+}
+
+/* Timeframe badges inside table */
+.table .badge {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  border: none;
+  margin: 2px;
+}
+
+/* LONG badge styling */
+.table .badge-success {
+  background: rgba(0, 211, 149, 0.15);
+  color: #00d395;
+  border: 1px solid rgba(0, 211, 149, 0.3);
+}
+
+/* SHORT badge styling */
+.table .badge-danger {
+  background: rgba(255, 71, 87, 0.15);
+  color: #ff4757;
+  border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+/* ============================================
+   PROBLEM 4 FIX: Card & Panel Backgrounds
+   ============================================ */
+
+/* Top 3 Featured Cards */
+.featured-card {
+  background: rgba(17, 34, 64, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.featured-card:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+  transform: translateY(-4px);
+}
+
+.featured-card .card-title {
+  color: #f1f5f9;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.featured-card .fs-5 {
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.featured-card .text-muted {
+  color: var(--text-secondary) !important;
+  font-size: 13px;
+}
+
+/* Filter Panel Container */
+.row + .card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  padding: 20px 24px;
+}
+
+/* Reading state messages */
+.alert {
+  background: rgba(6, 182, 212, 0.1);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 0.75rem;
+}
+
+/* ============================================
+   SORUN 1 FIX: Minimum Strength Buttons
+   ============================================ */
+
+/* Minimum Strength buttons - active state */
+.col-md-3 .btn-group .btn-primary {
+  background: #06b6d4 !important;
+  color: white !important;
+  border-color: #06b6d4 !important;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(6, 182, 212, 0.2);
+}
+
+/* Minimum Strength buttons - passive state */
+.col-md-3 .btn-group .btn-outline-secondary {
+  background: #1a2f4a !important;
+  color: #94a3b8 !important;
+  border: 1px solid var(--border-color) !important;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.col-md-3 .btn-group .btn-outline-secondary:hover {
+  color: #06b6d4 !important;
+  border-color: #06b6d4 !important;
+  background: rgba(6, 182, 212, 0.05) !important;
+}
+
+/* ============================================
+   SORUN 2 FIX: Freshness Column Text Color
+   ============================================ */
+
+/* Freshness column (9th td) - OPENED AT and FRESHNESS */
+.table tbody td:nth-child(9) {
+  color: var(--text-primary) !important;
+}
+
+.table tbody td:nth-child(9).small.text-muted {
+  color: var(--text-primary) !important;
 }
 
 
