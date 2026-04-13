@@ -7,16 +7,15 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="#" routerLinkActive="active">Ana Sayfa</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" routerLinkActive="active">Hakkında</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" routerLinkActive="active">İletişim</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Ana Sayfa</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/guide" routerLinkActive="active">Rehber</a></li>
       </ul>
     </div>
   </div>
 </nav>
 
 <!-- HERO artık bileşen -->
-<app-hero></app-hero>
+<app-hero *ngIf="showHero"></app-hero>
 
 
 <!-- İçerik -->

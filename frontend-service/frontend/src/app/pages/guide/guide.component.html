@@ -1,0 +1,169 @@
+<!-- ===== HERO BANNER ===== -->
+<section class="guide-hero">
+  <div class="guide-hero-content">
+    <div class="guide-hero-badge">📖 Kullanım Rehberi</div>
+    <h1>Kripto Sinyallerini <span class="accent">Doğru Okumayı</span> Öğren</h1>
+    <p>Platformumuzu nasıl kullanacağını adım adım anlattık.
+       Sinyalleri anlayarak daha bilinçli yatırım kararları ver.</p>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <span class="stat-number" data-target="500">0</span><span class="stat-plus">+</span>
+      <span class="stat-label">Günlük Sinyal</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number" data-target="4">0</span>
+      <span class="stat-label">Zaman Dilimi</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number" data-target="6">0</span>
+      <span class="stat-label">Analiz Göstergesi</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LONG / SHORT KAVRAMLARI ===== -->
+<section class="guide-section">
+  <h2 class="section-title">📈 LONG ve SHORT Nedir?</h2>
+  <p class="section-desc">Platformumuzda iki tip sinyal üretilir. Hangisinin ne anlama geldiğini öğren.</p>
+
+  <div class="flip-cards-container">
+    <!-- LONG Kartı -->
+    <div class="flip-card" (click)="toggleFlip($event)">
+      <div class="flip-card-inner">
+        <div class="flip-card-front long-card">
+          <div class="card-icon">📈</div>
+          <h3>LONG</h3>
+          <p>Fiyatın yükseleceği beklentisiyle verilen sinyal</p>
+          <span class="flip-hint">Detay için tıkla →</span>
+        </div>
+        <div class="flip-card-back long-card-back">
+          <h3>LONG Sinyal</h3>
+          <ul>
+            <li>✅ Fiyat artışı bekleniyor</li>
+            <li>✅ Al ve yükselişten kazan</li>
+            <li>✅ Target fiyat, giriş fiyatının üzerinde</li>
+            <li>⚠️ Stop Loss, giriş fiyatının altında</li>
+          </ul>
+          <div class="price-example">
+            <span class="entry">Giriş: $1.00</span>
+            <span class="arrow">→</span>
+            <span class="target">Hedef: $1.10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHORT Kartı -->
+    <div class="flip-card" (click)="toggleFlip($event)">
+      <div class="flip-card-inner">
+        <div class="flip-card-front short-card">
+          <div class="card-icon">📉</div>
+          <h3>SHORT</h3>
+          <p>Fiyatın düşeceği beklentisiyle verilen sinyal</p>
+          <span class="flip-hint">Detay için tıkla →</span>
+        </div>
+        <div class="flip-card-back short-card-back">
+          <h3>SHORT Sinyal</h3>
+          <ul>
+            <li>✅ Fiyat düşüşü bekleniyor</li>
+            <li>✅ Açığa sat ve düşüşten kazan</li>
+            <li>✅ Target fiyat, giriş fiyatının altında</li>
+            <li>⚠️ Stop Loss, giriş fiyatının üzerinde</li>
+          </ul>
+          <div class="price-example">
+            <span class="entry">Giriş: $1.00</span>
+            <span class="arrow">→</span>
+            <span class="target-short">Hedef: $0.90</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ADIM ADIM KULLANIM ===== -->
+<section class="guide-section alt-bg">
+  <h2 class="section-title">🚀 Nasıl Kullanılır?</h2>
+  <p class="section-desc">4 adımda sinyalleri anlamlandır ve işlem kararı ver.</p>
+
+  <div class="steps-container">
+    <div class="step-item" *ngFor="let step of steps; let i = index">
+      <div class="step-number">{{ i + 1 }}</div>
+      <div class="step-connector" *ngIf="i < steps.length - 1"></div>
+      <div class="step-card">
+        <div class="step-icon">{{ step.icon }}</div>
+        <h3>{{ step.title }}</h3>
+        <p>{{ step.desc }}</p>
+        <div class="step-tip" *ngIf="step.tip">
+          💡 <em>{{ step.tip }}</em>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GÖSTERGE AÇIKLAMALARI ===== -->
+<section class="guide-section">
+  <h2 class="section-title">🧩 Tablo Alanları Ne Anlama Gelir?</h2>
+
+  <div class="indicator-grid">
+    <div class="indicator-card" *ngFor="let ind of indicators"
+         (mouseenter)="ind.active = true" (mouseleave)="ind.active = false">
+      <div class="ind-header">
+        <span class="ind-icon">{{ ind.icon }}</span>
+        <span class="ind-name">{{ ind.name }}</span>
+      </div>
+      <div class="ind-short">{{ ind.short }}</div>
+      <div class="ind-detail" [class.visible]="ind.active">
+        <p>{{ ind.detail }}</p>
+        <div class="ind-example" *ngIf="ind.example">
+          <span class="ex-label">Örnek:</span> {{ ind.example }}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== REASONS ETİKET REHBERİ ===== -->
+<section class="guide-section alt-bg">
+  <h2 class="section-title">🏷️ Sinyal Etiketleri Rehberi</h2>
+
+  <div class="reasons-guide-grid">
+    <div class="reason-group" *ngFor="let group of reasonGroups">
+      <div class="reason-group-header" [style.borderColor]="group.color">
+        <span class="group-dot" [style.background]="group.color"></span>
+        {{ group.category }}
+      </div>
+      <div class="reason-tags">
+        <div class="reason-guide-tag"
+             *ngFor="let tag of group.tags"
+             [style.color]="group.color"
+             [style.borderColor]="group.color + '44'"
+             [style.background]="group.color + '18'">
+          <span class="tag-name">{{ tag.label }}</span>
+          <span class="tag-desc">{{ tag.desc }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SSS ACCORDION ===== -->
+<section class="guide-section">
+  <h2 class="section-title">❓ Sık Sorulan Sorular</h2>
+
+  <div class="faq-list">
+    <div class="faq-item" *ngFor="let faq of faqs"
+         [class.open]="faq.open" (click)="faq.open = !faq.open">
+      <div class="faq-question">
+        <span>{{ faq.q }}</span>
+        <span class="faq-arrow">{{ faq.open ? '▲' : '▼' }}</span>
+      </div>
+      <div class="faq-answer">
+        <p>{{ faq.a }}</p>
+      </div>
+    </div>
+  </div>
+</section>
