@@ -4,6 +4,7 @@ import { GuideComponent } from './pages/guide/guide.component';
 import { ContactComponent } from './pages/contact/contact.component';
 
 export const routes: Routes = [
+  { path: 'home', component: SignalTableComponent },
   { path: '', component: SignalTableComponent },
   { path: 'guide', component: GuideComponent },
   { path: 'contact', component: ContactComponent },

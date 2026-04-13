@@ -17,6 +17,6 @@ export class AppComponent {
   constructor(public router: Router) {}
 
   get showHero(): boolean {
-    return this.router.url === '/' || this.router.url === '';
+    return this.router.url === '/' || this.router.url === '/home';
   }
 }
