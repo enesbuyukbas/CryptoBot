@@ -1,0 +1,24 @@
+<!-- ===== INTRO SECTION ===== -->
+<section class="contact-intro">
+  <h1 class="intro-title">📞 İletişim</h1>
+  <p class="intro-desc">
+    Sorular, geri bildirimler, iş birlikleri ve ürünle ilgili öneriler için benimle iletişime geçebilirsiniz.
+  </p>
+</section>
+
+<!-- ===== CONTACT CARDS ===== -->
+<section class="contact-section">
+  <div class="contacts-grid">
+    <div class="contact-card"
+         *ngFor="let contact of contacts">
+      <div class="card-icon">{{ contact.icon }}</div>
+      <h2 class="card-title">{{ contact.title }}</h2>
+      <p class="card-description">{{ contact.description }}</p>
+      <button class="contact-button"
+              (click)="openLink(contact.url, contact.external)"
+              [attr.aria-label]="'İletişim yöntemi: ' + contact.title">
+        {{ contact.buttonText }}
+      </button>
+    </div>
+  </div>
+</section>

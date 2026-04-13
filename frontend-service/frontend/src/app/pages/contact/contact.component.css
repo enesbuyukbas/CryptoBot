@@ -1,0 +1,204 @@
+/* ============================================
+   INTRO SECTION - COMPACT & MINIMAL
+   ============================================ */
+.contact-intro {
+  padding: 60px 60px;
+  text-align: center;
+  border-bottom: 1px solid #1e3a5f;
+}
+
+.intro-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 12px;
+  letter-spacing: 0.3px;
+}
+
+.intro-desc {
+  color: #94a3b8;
+  font-size: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ============================================
+   CONTACT CARDS GRID
+   ============================================ */
+.contact-section {
+  padding: 80px 60px;
+}
+
+.contacts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.contact-card {
+  background: #112240;
+  border: 1px solid #1e3a5f;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.25s ease;
+  cursor: default;
+}
+
+.contact-card:hover {
+  border-color: #06b6d4;
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.1);
+  transform: translateY(-4px);
+}
+
+.card-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 8px;
+}
+
+.card-description {
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+  flex-grow: 1;
+}
+
+/* ============================================
+   CONTACT BUTTON
+   ============================================ */
+.contact-button {
+  background: transparent;
+  border: 1px solid #06b6d4;
+  color: #06b6d4;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.contact-button:hover {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: #06b6d4;
+  transform: translateX(2px);
+}
+
+.contact-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+}
+
+.contact-button:active {
+  transform: translateX(0);
+}
+
+.button-arrow {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.contact-button:hover .button-arrow {
+  transform: translateX(4px);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 992px) {
+  .contact-intro {
+    padding: 48px 30px;
+  }
+
+  .intro-title {
+    font-size: 24px;
+  }
+
+  .contact-section {
+    padding: 60px 30px;
+  }
+
+  .contacts-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-intro {
+    padding: 36px 20px;
+  }
+
+  .intro-title {
+    font-size: 22px;
+  }
+
+  .intro-desc {
+    font-size: 15px;
+  }
+
+  .contact-section {
+    padding: 48px 20px;
+  }
+
+  .contacts-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .contact-card {
+    padding: 24px;
+  }
+
+  .card-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .contact-card,
+  .contact-button {
+    transition: none;
+  }
+
+  .contact-card:hover {
+    transform: none;
+  }
+
+  .contact-button:hover .button-arrow {
+    transform: none;
+  }
+}
+
+/* ============================================
+   FOCUS VISIBLE FOR KEYBOARD NAVIGATION
+   ============================================ */
+.contact-button:focus-visible {
+  outline: 2px solid #06b6d4;
+  outline-offset: 2px;
+}
