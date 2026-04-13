@@ -3,7 +3,7 @@
   border-radius: 1rem;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
   transform: translateY(0) scale(1);
-  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease, border-color .25s ease;
   animation: riseIn .6s cubic-bezier(.2,.8,.2,1) both;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -112,7 +112,7 @@
 
 /* Reasons Cell - Container for badge and popover */
 .reasons-cell {
-  position: relative;
+  /* No special positioning needed for fixed popover */
 }
 
 /* Reasons Popover - Dark Theme */
@@ -127,7 +127,6 @@
   max-width: 300px;
   animation: popoverIn .2s ease;
   pointer-events: auto;
-  transform: translateX(-50%);
 }
 
 @keyframes popoverIn {

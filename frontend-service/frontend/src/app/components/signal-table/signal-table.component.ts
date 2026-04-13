@@ -30,13 +30,15 @@ export class SignalTableComponent implements OnInit {
   minStrength: number = 0;
   minStrengthPresets = [0, 60, 70, 80, 90]; // Quick filter presets
   currentPage: number = 1;
-  pageSize: number = 25;
+  pageSize: number = 10;
 
   // Loading state
   isLoading: boolean = false;
 
   // Popover state for reasons display
   openPopoverId: string | null = null;
+  popoverPosition: { top: number; left: number } | null = null;
+  private scrollListener: (() => void) | null = null;
 
   private signalService = inject(SignalService);
 
@@ -198,45 +200,45 @@ export class SignalTableComponent implements OnInit {
     return direction === 'BUY' ? 'LONG' : direction === 'SELL' ? 'SHORT' : direction;
   }
 
-  // Reason labels mapping (English code → Turkish label)
+  // Reason labels mapping (English code → English label)
   private reasonLabels: { [key: string]: string } = {
     // Trend
-    'TREND_PERFECT': 'Trend Mükemmel',
-    'TREND_UP': 'Trend Yükseliyor',
-    'TREND_DOWN': 'Trend Düşüyor',
-    'TREND_STRONG': 'Trend Güçlü',
-    'TREND_WEAK': 'Trend Zayıf',
+    'TREND_PERFECT': 'Perfect Trend',
+    'TREND_UP': 'Uptrend',
+    'TREND_DOWN': 'Downtrend',
+    'TREND_STRONG': 'Strong Trend',
+    'TREND_WEAK': 'Weak Trend',
 
     // Momentum
-    'MOMENTUM_STRONG': 'Momentum Güçlü',
-    'MOMENTUM_GOOD': 'Momentum İyi',
-    'MOMENTUM_WEAK': 'Momentum Zayıf',
-    'MOMENTUM_BULLISH': 'Momentum Yükseliş',
-    'MOMENTUM_BEARISH': 'Momentum Düşüş',
+    'MOMENTUM_STRONG': 'Strong Momentum',
+    'MOMENTUM_GOOD': 'Good Momentum',
+    'MOMENTUM_WEAK': 'Weak Momentum',
+    'MOMENTUM_BULLISH': 'Bullish Momentum',
+    'MOMENTUM_BEARISH': 'Bearish Momentum',
 
     // ADX
-    'ADX_VERY_STRONG': 'Çok Güçlü',
-    'ADX_STRONG': 'Güçlü Sinyal',
-    'ADX_MODERATE': 'Orta Sinyal',
-    'ADX_WEAK': 'Zayıf Sinyal',
+    'ADX_VERY_STRONG': 'Very Strong',
+    'ADX_STRONG': 'Strong Signal',
+    'ADX_MODERATE': 'Moderate Signal',
+    'ADX_WEAK': 'Weak Signal',
 
     // RSI
-    'RSI_OPTIMAL': 'RSI İdeal',
-    'RSI_HEALTHY': 'RSI Sağlıklı',
-    'RSI_OVERSOLD': 'RSI Aşırı Satım',
-    'RSI_OVERBOUGHT': 'RSI Aşırı Alım',
-    'RSI_NEUTRAL': 'RSI Nötr',
+    'RSI_OPTIMAL': 'Optimal RSI',
+    'RSI_HEALTHY': 'Healthy RSI',
+    'RSI_OVERSOLD': 'Oversold',
+    'RSI_OVERBOUGHT': 'Overbought',
+    'RSI_NEUTRAL': 'Neutral RSI',
 
     // MACD
-    'MACD_BULLISH': 'MACD Yükseliş',
-    'MACD_BEARISH': 'MACD Düşüş',
-    'MACD_CROSS_UP': 'MACD Kesişim ↑',
-    'MACD_CROSS_DOWN': 'MACD Kesişim ↓',
+    'MACD_BULLISH': 'Bullish MACD',
+    'MACD_BEARISH': 'Bearish MACD',
+    'MACD_CROSS_UP': 'MACD Crossover Up',
+    'MACD_CROSS_DOWN': 'MACD Crossover Down',
 
     // Volume
-    'VOLUME_HIGH': 'Hacim Yüksek',
-    'VOLUME_LOW': 'Hacim Düşük',
-    'VOLUME_SPIKE': 'Hacim Patlaması'
+    'VOLUME_HIGH': 'High Volume',
+    'VOLUME_LOW': 'Low Volume',
+    'VOLUME_SPIKE': 'Volume Spike'
   };
 
   // Reason color mapping by category
@@ -387,7 +389,6 @@ export class SignalTableComponent implements OnInit {
   trackBySymbol = (_: number, item: Signal) => item?.symbol ?? _;
 
   // Popover position for fixed positioning
-  popoverPosition: { top: string; left: string } | null = null;
 
   // Popover methods for reasons display
   toggleReasonPopover(popoverId: string, event?: Event): void {
@@ -395,25 +396,55 @@ export class SignalTableComponent implements OnInit {
       const element = event.target as HTMLElement;
       const rect = element.getBoundingClientRect();
 
-      // Position popover below the badge, centered on badge
-      // Popover width is 220-300px, use ~260px as average
-      const popoverWidth = 260;
+      // Position popover below the badge, centered
+      const popoverWidth = 280;
       const centerX = rect.left + rect.width / 2 - popoverWidth / 2;
+      const topY = rect.bottom + 8; // 8px gap below button
 
       this.popoverPosition = {
-        top: (rect.bottom + 8) + 'px',
-        left: centerX + 'px'
+        top: topY,
+        left: centerX
       };
+
+      // Add scroll listener to update position
+      this.setupScrollListener();
       this.openPopoverId = popoverId;
     } else {
-      this.openPopoverId = null;
-      this.popoverPosition = null;
+      this.closeReasonPopover();
     }
+  }
+
+  private setupScrollListener(): void {
+    if (this.scrollListener) return; // Already set up
+
+    this.scrollListener = () => {
+      // Update popover position on scroll
+      const badge = document.querySelector(`[data-popover-id="${this.openPopoverId}"]`) as HTMLElement;
+      if (badge) {
+        const rect = badge.getBoundingClientRect();
+        const popoverWidth = 280;
+        const centerX = rect.left + rect.width / 2 - popoverWidth / 2;
+        const topY = rect.bottom + 8;
+
+        if (this.popoverPosition) {
+          this.popoverPosition.top = topY;
+          this.popoverPosition.left = centerX;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', this.scrollListener, true);
   }
 
   closeReasonPopover(): void {
     this.openPopoverId = null;
     this.popoverPosition = null;
+
+    // Remove scroll listener
+    if (this.scrollListener) {
+      window.removeEventListener('scroll', this.scrollListener, true);
+      this.scrollListener = null;
+    }
   }
 
   getReasonPopoverId(symbol: string, timeframe: string): string {

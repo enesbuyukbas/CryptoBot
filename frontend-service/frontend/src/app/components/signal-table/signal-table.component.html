@@ -1,7 +1,7 @@
 <div class="container-fluid my-4">
 
   <!-- TOP 3 FEATURED CARDS -->
-  <h2 class="mb-3">Öne Çıkan Sinyaller</h2>
+  <h2 class="mb-3">⭐ Top Signals</h2>
   <div class="row row-cols-1 row-cols-md-3 g-3 mb-5">
     <div class="col" *ngFor="let s of top3Signals; trackBy: trackBySymbol">
       <div class="card h-100 shadow-sm border-0 featured-card">
@@ -41,7 +41,7 @@
   </div>
 
   <!-- FILTER SECTION -->
-  <h2 class="mb-3">Sinyaller</h2>
+  <h2 class="mb-3">📈 Signal Dashboard</h2>
 
   <div class="card mb-4 shadow-sm">
     <div class="card-body">
@@ -160,15 +160,16 @@
           <td class="small">{{ getRelativeFreshness(signal.openedAt) }}</td>
           <td class="reasons-cell">
             <span class="reasons-badge cursor-pointer" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);"
+                  [attr.data-popover-id]="getReasonPopoverId(signal.symbol, signal.timeframe)"
                   (click)="toggleReasonPopover(getReasonPopoverId(signal.symbol, signal.timeframe), $event)"
                   (blur)="closeReasonPopover()">
               {{ getReasonSummary(signal.reason) }}
             </span>
             <!-- Reasons Popover -->
             <div class="reasons-popover"
-                 *ngIf="openPopoverId === getReasonPopoverId(signal.symbol, signal.timeframe)"
-                 [style.top]="popoverPosition?.top"
-                 [style.left]="popoverPosition?.left"
+                 *ngIf="openPopoverId === getReasonPopoverId(signal.symbol, signal.timeframe) && popoverPosition"
+                 [style.top.px]="popoverPosition?.top"
+                 [style.left.px]="popoverPosition?.left"
                  (click)="$event.stopPropagation()">
               <div class="reasons-popover-header">
                 <strong>{{ signal.symbol }} - Reasons</strong>
