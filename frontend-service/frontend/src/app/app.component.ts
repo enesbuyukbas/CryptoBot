@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { HeroComponent } from "./components/hero/hero.component";
+import { FooterComponent } from "./components/footer/footer.component";
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,7 +9,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, HeroComponent, CommonModule]
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, HeroComponent, FooterComponent, CommonModule]
 })
 export class AppComponent {
   title = 'Crypto Signal Dashboard';

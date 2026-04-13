@@ -1,0 +1,202 @@
+/* ============================================
+   FOOTER — Compact Premium
+   ============================================ */
+
+.site-footer {
+  margin-top: auto;
+  color: var(--text-secondary, #94a3b8);
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Shared container — matches navbar .container width */
+.footer-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ============================================
+   UPPER FOOTER
+   ============================================ */
+.footer-upper {
+  background: var(--bg-secondary, #112240);
+  border-top: 1px solid var(--border-color, #1e3a5f);
+  padding: 48px 0 40px;
+}
+
+.footer-upper .footer-container {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 40px;
+  align-items: start;
+}
+
+.footer-brand {
+  grid-column: 1;
+}
+
+.footer-links {
+  grid-column: 3;
+}
+
+.footer-contact {
+  grid-column: 4;
+}
+
+/* ---------- Brand column ---------- */
+.footer-logo {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #e2e8f0);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.footer-tagline {
+  color: var(--text-muted, #64748b);
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 280px;
+}
+
+/* ---------- Headings ---------- */
+.footer-heading {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary, #94a3b8);
+  margin: 0 0 16px;
+}
+
+/* ---------- Navigation lists ---------- */
+.footer-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-nav li {
+  margin-bottom: 10px;
+}
+
+.footer-nav li:last-child {
+  margin-bottom: 0;
+}
+
+.footer-nav a {
+  color: var(--text-muted, #64748b);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.footer-nav a:hover {
+  color: var(--accent-cyan, #06b6d4);
+}
+
+/* ============================================
+   BOTTOM BAR
+   ============================================ */
+.footer-bottom {
+  background: var(--bg-primary, #0d1b2a);
+  border-top: 1px solid var(--border-color, #1e3a5f);
+  padding: 16px 0;
+}
+
+.footer-bottom-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-copyright {
+  color: var(--text-muted, #64748b);
+  font-size: 12px;
+}
+
+.footer-secondary-nav {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-secondary-nav a {
+  color: var(--text-muted, #64748b);
+  text-decoration: none;
+  font-size: 12px;
+  transition: color 0.2s ease;
+}
+
+.footer-secondary-nav a:hover {
+  color: var(--accent-cyan, #06b6d4);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .footer-upper {
+    padding: 36px 0 32px;
+  }
+
+  .footer-upper .footer-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+
+  .footer-tagline {
+    max-width: 100%;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .footer-upper {
+    padding: 32px 0 28px;
+  }
+
+  .footer-upper .footer-container {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .footer-brand {
+    grid-column: auto;
+    text-align: center;
+  }
+
+  .footer-tagline {
+    margin: 0 auto;
+  }
+
+  .footer-links,
+  .footer-contact {
+    text-align: center;
+  }
+
+  .footer-bottom-inner {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .footer-nav a,
+  .footer-secondary-nav a {
+    transition: none;
+  }
+}

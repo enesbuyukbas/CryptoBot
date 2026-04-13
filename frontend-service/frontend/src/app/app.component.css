@@ -14,12 +14,4 @@
   color: #06b6d4;
 }
 
-/* ==================== FOOTER STYLING ==================== */
-.footer-custom {
-  color: #64748b;
-  font-size: 13px;
-  border-top: 1px solid #1e3a5f;
-  background: var(--bg-secondary, #112240);
-  margin-top: auto;
-  padding: 20px 0;
-}
+
