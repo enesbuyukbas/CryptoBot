@@ -168,8 +168,8 @@
             <!-- Reasons Popover -->
             <div class="reasons-popover"
                  *ngIf="openPopoverId === getReasonPopoverId(signal.symbol, signal.timeframe) && popoverPosition"
-                 [style.top.px]="popoverPosition?.top"
-                 [style.left.px]="popoverPosition?.left"
+                 [style.top.px]="popoverPosition.top"
+                 [style.left.px]="popoverPosition.left"
                  (click)="$event.stopPropagation()">
               <div class="reasons-popover-header">
                 <strong>{{ signal.symbol }} - Reasons</strong>

@@ -3,9 +3,9 @@
   <div class="overlay"></div>
 
   <!-- CAROUSEL: 2 SLIDES -->
-  <div class="hero-slider">
+  <div class="hero-slider" [class.dir-left]="direction() === 'left'" [class.dir-right]="direction() === 'right'">
     <!-- SLIDE 0: INTRO / BRAND -->
-    <div class="slide" [class.active]="current() === 0">
+    <div class="slide" [class.active]="current() === 0" [class.inactive]="current() !== 0">
       <div class="hero-content container">
         <div class="content-wrapper">
           <h1 class="hero-title">
@@ -22,9 +22,9 @@
     </div>
 
     <!-- SLIDE 1: METRICS CARDS -->
-    <div class="slide" [class.active]="current() === 1">
+    <div class="slide" [class.active]="current() === 1" [class.inactive]="current() !== 1">
       <div class="metrics-container container-fluid">
-        <h2 class="metrics-title">Pazar Metrikleri</h2>
+        <h2 class="metrics-title">🌍 Global Market Metrics</h2>
         <div class="metrics-grid">
           <!-- Card 1: Fear & Greed Gauge -->
           <div class="metric-card metric-card--fng">
@@ -135,13 +135,8 @@
                 <div *ngIf="!errorAlt(); else altError" class="alt-progress-wrapper">
                   <!-- Chart area with consistent spacing -->
                   <div class="metric-chart-area">
-                    <!-- Top labels -->
-                    <div class="metric-chart-labels-top">
-                      <div class="alt-labels-top">
-                        <span class="alt-label-left">Bitcoin</span>
-                        <span class="alt-label-right">Altcoins</span>
-                      </div>
-                    </div>
+                    <!-- Top labels (empty space for alignment with RSI) -->
+                    <div class="metric-chart-labels-top"></div>
 
                     <!-- Bar -->
                     <svg class="alt-progress-bar" viewBox="0 0 200 12" preserveAspectRatio="xMidYMid meet">
@@ -162,8 +157,14 @@
                       </g>
                     </svg>
 
-                    <!-- Bottom labels (empty space for alignment with RSI) -->
-                    <div class="metric-chart-labels-bottom"></div>
+                    <!-- Bottom labels -->
+                    <div class="metric-chart-labels-bottom">
+                      <div class="alt-zone-labels">
+                        <span class="alt-label-zone">Bitcoin</span>
+                        <span class="alt-label-zone">Neutral</span>
+                        <span class="alt-label-zone">Altcoins</span>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="alt-value-box">

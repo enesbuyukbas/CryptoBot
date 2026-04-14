@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MetricsService } from '../../services/metrics.service';
 import { MetricCard } from '../../models/metric-card.model';
@@ -10,9 +10,10 @@ import { MetricCard } from '../../models/metric-card.model';
   templateUrl: './hero.component.html',
   styleUrls: ['./hero.component.css']
 })
-export class HeroComponent {
+export class HeroComponent implements OnDestroy {
   // 0 = metin sayfası, 1 = kartlar sayfası
   current = signal<0 | 1>(0);
+  direction = signal<'left' | 'right' | null>(null); // null = ilk yükleme, animasyon yok
 
   // FNG kart verisi (ilk kart)
   fng = signal<MetricCard | null>(null);
@@ -34,17 +35,33 @@ export class HeroComponent {
   loadingAvgRsi = signal(true);
   errorAvgRsi = signal<string | null>(null);
 
+  // Market cap bar chart verileri (veri gelince change24h'ye göre güncellenir)
+  mcapBars = signal<number[]>([0.55, 0.58, 0.61, 0.59, 0.63, 0.66, 0.65]);
+
+  // Refresh interval ID'leri (cleanup için)
+  private timers: ReturnType<typeof setInterval>[] = [];
+
+  // Tüm metrikler günde 1 kez güncellenir — yük minimumda
+  private static readonly REFRESH = 24 * 60 * 60 * 1000; // 24 saat
 
   constructor(private metrics: MetricsService) {
-    this.loadAll();
-    setInterval(() => this.loadAll(), 60000); // 60sn de bir yenile
-  }
-
-  private loadAll() {
+    // İlk yükleme: kademeli (CoinGecko rate-limit koruması)
     this.loadFng();
     this.loadMarket();
-    this.loadAltseason();
-    this.loadAvgRsi();
+    setTimeout(() => this.loadAltseason(), 3000);
+    setTimeout(() => this.loadAvgRsi(), 6000);
+
+    // 24 saatte bir tümünü yenile (kademeli)
+    this.timers.push(setInterval(() => {
+      this.loadFng();
+      this.loadMarket();
+      setTimeout(() => this.loadAltseason(), 3000);
+      setTimeout(() => this.loadAvgRsi(), 6000);
+    }, HeroComponent.REFRESH));
+  }
+
+  ngOnDestroy() {
+    this.timers.forEach(t => clearInterval(t));
   }
 
   private loadFng() {
@@ -58,7 +75,12 @@ export class HeroComponent {
   private loadMarket() {
     this.loadingMcap.set(true);
     this.metrics.getMarketCap().subscribe({
-      next: d => { this.market.set(d); this.loadingMcap.set(false); this.errorMcap.set(null); },
+      next: d => {
+        this.market.set(d);
+        this.mcapBars.set(this.generateBars(d.change24h ?? 0));
+        this.loadingMcap.set(false);
+        this.errorMcap.set(null);
+      },
       error: _ => { this.errorMcap.set('Veri alınamadı'); this.loadingMcap.set(false); }
     });
   }
@@ -93,9 +115,15 @@ export class HeroComponent {
     return '#6b7280';
   }
 
-  go(idx: 0 | 1) { this.current.set(idx); }
-  next() { this.current.set(this.current() === 0 ? 1 : 0); }
-  prev() { this.current.set(this.current() === 0 ? 1 : 0); }
+  go(idx: 0 | 1) {
+    if (idx === this.current()) return;
+    this.direction.set(idx > this.current() ? 'right' : 'left');
+    this.current.set(idx);
+  }
+  // Sağ ok: silindir sola döner → mevcut sola çıkar, yeni sağdan gelir
+  next() { this.direction.set('left'); this.current.set(this.current() === 0 ? 1 : 0); }
+  // Sol ok: silindir sağa döner → mevcut sağa çıkar, yeni soldan gelir
+  prev() { this.direction.set('right'); this.current.set(this.current() === 0 ? 1 : 0); }
 
   // RSI status label
   getRsiLabel(v?: number | null): string {
@@ -142,12 +170,12 @@ export class HeroComponent {
    * Get Fear & Greed label based on value
    */
   getFngLabel(value?: number | null): string {
-    if (value == null) return 'Nötr';
-    if (value <= 25) return 'Aşırı Korku';
-    if (value <= 45) return 'Korku';
-    if (value <= 55) return 'Nötr';
-    if (value <= 75) return 'Açgözlülük';
-    return 'Aşırı Açgözlülük';
+    if (value == null) return 'Neutral';
+    if (value <= 25) return 'Extreme Fear';
+    if (value <= 45) return 'Fear';
+    if (value <= 55) return 'Neutral';
+    if (value <= 75) return 'Greed';
+    return 'Extreme Greed';
   }
 
   /**
@@ -165,18 +193,37 @@ export class HeroComponent {
    * Last bar represents current value, others are simulated previous values
    */
   getMcapBars(): number[] {
-    const currentValue = this.market()?.value ?? 1;
-    // Simulated 7-day data (normalized to 0-1 range)
-    const baseValue = currentValue * 0.95;
-    return [
-      0.5 + Math.random() * 0.4,  // Day 1
-      0.55 + Math.random() * 0.35, // Day 2
-      0.6 + Math.random() * 0.3,   // Day 3
-      0.58 + Math.random() * 0.32, // Day 4
-      0.65 + Math.random() * 0.25, // Day 5
-      0.7 + Math.random() * 0.2,   // Day 6
-      1.0  // Day 7 (current, always highest)
-    ];
+    return this.mcapBars();
+  }
+
+  /**
+   * change24h'ye göre yönsel olarak doğru bar grafiği üret.
+   * Pozitif → barlar yükseliş trendi, Negatif → düşüş trendi.
+   * Son bar her zaman güncel durumu temsil eder.
+   */
+  private generateBars(change24h: number = 0): number[] {
+    const count = 7;
+    const bars: number[] = [];
+
+    // change24h'yi -10..+10 aralığında normalize et (aşırı değerleri sınırla)
+    const clamped = Math.max(-10, Math.min(10, change24h));
+    // Eğim faktörü: her bar arasındaki fark (0.02 ~ 0.06 arası)
+    const slope = (clamped / 100) * 0.5;
+
+    // Son barın yüksekliği (0.4 ~ 0.95 arası, change'e göre)
+    const lastBar = 0.65 + (clamped / 10) * 0.25;
+    const clampedLast = Math.max(0.3, Math.min(0.95, lastBar));
+
+    for (let i = 0; i < count; i++) {
+      // Son bardan geriye doğru hesapla
+      const stepsFromEnd = count - 1 - i;
+      const base = clampedLast - (slope * stepsFromEnd);
+      // Küçük deterministik varyasyon ekle (seed: index)
+      const jitter = ((i * 7 + 3) % 5 - 2) * 0.03;
+      bars.push(Math.max(0.15, Math.min(1, base + jitter)));
+    }
+
+    return bars;
   }
 
   /**

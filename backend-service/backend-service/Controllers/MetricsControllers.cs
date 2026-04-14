@@ -20,11 +20,14 @@ namespace backend_service.Controllers
         private readonly IAverageRsiClient _avgRsi;
         private readonly IMemoryCache _cache;
 
+        // CoinGecko rate-limit koruması: aynı anda sadece 1 CG çağrısı
+        private static readonly SemaphoreSlim _cgLock = new(1, 1);
 
-        private static readonly TimeSpan TtlFng = TimeSpan.FromSeconds(90);
-        private static readonly TimeSpan TtlMcap = TimeSpan.FromMinutes(90);
-        private static readonly TimeSpan TtlAltseason = TimeSpan.FromHours(6);
-        private static readonly TimeSpan TtlAvgRsi = TimeSpan.FromHours(4);
+        // Tüm metrikler günde 1 kez güncellenir — API yükünü minimumda tut
+        private static readonly TimeSpan TtlFng = TimeSpan.FromHours(24);
+        private static readonly TimeSpan TtlMcap = TimeSpan.FromHours(24);
+        private static readonly TimeSpan TtlAltseason = TimeSpan.FromHours(24);
+        private static readonly TimeSpan TtlAvgRsi = TimeSpan.FromHours(24);
 
         public MetricsController(ILogger<MetricsController> logger, IFngClient fng, IGlobalMarketClient global, IAltseasonClient altseason, IAverageRsiClient avgRsi, IMemoryCache cache)
         {
@@ -56,7 +59,9 @@ namespace backend_service.Controllers
                 var dto = await _cache.GetOrCreateAsync("metric:marketcap", async e =>
                 {
                     e.AbsoluteExpirationRelativeToNow = TtlMcap;
-                    return await _global.GetGlobalMarketCapAsync(ct);
+                    await _cgLock.WaitAsync(ct);
+                    try { return await _global.GetGlobalMarketCapAsync(ct); }
+                    finally { _cgLock.Release(); }
                 });
                 return Ok(dto);
             }
@@ -75,7 +80,9 @@ namespace backend_service.Controllers
                 var dto = await _cache.GetOrCreateAsync("metric:altseason", async e =>
                 {
                     e.AbsoluteExpirationRelativeToNow = TtlAltseason;
-                    return await _altseason.GetAltseasonAsync(ct);
+                    await _cgLock.WaitAsync(ct);
+                    try { return await _altseason.GetAltseasonAsync(ct); }
+                    finally { _cgLock.Release(); }
                 });
                 return Ok(dto);
             }
@@ -94,7 +101,9 @@ namespace backend_service.Controllers
                 var dto = await _cache.GetOrCreateAsync("metric:avg-rsi", async e =>
                 {
                     e.AbsoluteExpirationRelativeToNow = TtlAvgRsi;
-                    return await _avgRsi.GetAverageRsiAsync(ct);
+                    await _cgLock.WaitAsync(ct);
+                    try { return await _avgRsi.GetAverageRsiAsync(ct); }
+                    finally { _cgLock.Release(); }
                 });
                 return Ok(dto);
             }
