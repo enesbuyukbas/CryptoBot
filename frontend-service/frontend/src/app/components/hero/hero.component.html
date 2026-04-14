@@ -9,13 +9,12 @@
       <div class="hero-content container">
         <div class="content-wrapper">
           <h1 class="hero-title">
-            Yatırımlarını Güçlendiren Kripto Asistanın
+            Kripto Sinyalleri ve Piyasa Analizi
           </h1>
           <p class="hero-subtitle">
-            Kripto dünyasında hızlı değişimlere ayak uydurmak zordur. CryptoBot,
-            piyasaları 7/24 takip ederek sana en güncel sinyalleri ve analizleri
-            sunar. Sen sadece stratejine odaklan, verileri toplamak ve
-            anlamlandırmak bizim işimiz.
+            Gerçek zamanlı sinyaller, teknik analizler ve önemli piyasa göstergeleriyle
+            fırsatları daha hızlı değerlendirin. Piyasadaki kritik hareketleri tek
+            ekranda izleyerek daha bilinçli kararlar alın.
           </p>
         </div>
       </div>
@@ -67,7 +66,11 @@
 
                   <div class="fng-value-box">
                     <div class="fng-value">{{ fng()?.value ?? '-' }}</div>
-                    <div class="fng-label">{{ getFngLabel(fng()?.value) }}</div>
+                    <div class="fng-label"
+                      [style.background]="getFngBadgeColor(fng()?.value)"
+                      [style.color]="'#fff'">
+                      {{ getFngLabel(fng()?.value) }}
+                    </div>
                   </div>
                 </div>
                 <ng-template #fngError>
@@ -202,21 +205,21 @@
                     <div class="metric-chart-labels-top"></div>
 
                     <!-- Bar -->
-                    <svg class="rsi-scale-bar" viewBox="0 0 200 36" preserveAspectRatio="xMidYMid meet">
-                      <!-- Oversold zone (cyan, 0-30) -->
+                    <svg class="rsi-scale-bar" viewBox="0 0 200 12" preserveAspectRatio="xMidYMid meet">
+                      <!-- Oversold zone (0-30) -->
                       <rect class="rsi-zone rsi-zone--oversold"
-                        x="0" y="4" width="60" height="12" rx="2" />
-                      <!-- Neutral zone (gray, 30-70) -->
+                        x="0" y="0" width="60" height="12" rx="3" />
+                      <!-- Neutral zone (30-70) -->
                       <rect class="rsi-zone rsi-zone--neutral"
-                        x="60" y="4" width="80" height="12" rx="2" />
-                      <!-- Overbought zone (red, 70-100) -->
+                        x="60" y="0" width="80" height="12" rx="3" />
+                      <!-- Overbought zone (70-100) -->
                       <rect class="rsi-zone rsi-zone--overbought"
-                        x="140" y="4" width="60" height="12" rx="2" />
+                        x="140" y="0" width="60" height="12" rx="3" />
 
                       <!-- Current value indicator -->
                       <g [attr.transform]="'translate(' + calculateRsiPosition(avgRsi()?.value) + ' 0)'">
-                        <line class="rsi-cursor" x1="0" y1="-4" x2="0" y2="20" stroke-width="2" />
-                        <circle class="rsi-cursor-dot" cx="0" cy="10" r="3" />
+                        <line class="rsi-cursor" x1="0" y1="-6" x2="0" y2="18" stroke-width="2" />
+                        <circle class="rsi-cursor-dot" cx="0" cy="6" r="4" />
                       </g>
                     </svg>
 
@@ -250,12 +253,16 @@
     </div>
   </div>
 
-  <!-- Carousel Navigation: Arrows (subtle) -->
+  <!-- Carousel Navigation: Arrows -->
   <button class="nav-arrow nav-prev" (click)="prev()" aria-label="Önceki Slayt" title="Önceki">
-    ‹
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </button>
   <button class="nav-arrow nav-next" (click)="next()" aria-label="Sonraki Slayt" title="Sonraki">
-    ›
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </button>
 
   <!-- Slide Indicators (dots) -->

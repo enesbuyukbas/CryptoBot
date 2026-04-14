@@ -101,19 +101,57 @@ export class HeroComponent implements OnDestroy {
   });
 }
 
-  badgeText(v?: number | null): 'Altseason' | 'Bitcoin Season' | 'Neutral' {
-    if (v == null) return 'Neutral';
-    if (v >= 75) return 'Altseason';
-    if (v <= 25) return 'Bitcoin Season';
-    return 'Neutral';
+  // ==================== COLOR TOKENS ====================
+  // Anlamsal renk haritası — chart zone renkleriyle birebir eşleşir
+  private static readonly ALT_TOKENS = {
+    altseason:    { bg: '#7c3aed', text: '#fff', label: 'Altseason'     }, // mor — zone rengiyle uyumlu
+    neutral:      { bg: '#4b5563', text: '#fff', label: 'Neutral'       }, // nötr gri
+    bitcoin:      { bg: '#92400e', text: '#fff', label: 'Bitcoin Season'}, // kahve — zone rengiyle uyumlu
+  } as const;
+
+  private static readonly RSI_TOKENS = {
+    overbought: { bg: '#b91c1c', text: '#fff', label: 'Overbought' }, // kırmızı — zone rengiyle uyumlu
+    neutral:    { bg: '#4b5563', text: '#fff', label: 'Neutral'    }, // nötr gri
+    oversold:   { bg: '#0284c7', text: '#fff', label: 'Oversold'   }, // mavi — zone rengiyle uyumlu
+  } as const;
+
+  private static readonly FNG_TOKENS = {
+    extremeFear:  { bg: '#b91c1c', text: '#fff', label: 'Extreme Fear'  },
+    fear:         { bg: '#c2410c', text: '#fff', label: 'Fear'          },
+    neutral:      { bg: '#a16207', text: '#fff', label: 'Neutral'       },
+    greed:        { bg: '#15803d', text: '#fff', label: 'Greed'         },
+    extremeGreed: { bg: '#166534', text: '#fff', label: 'Extreme Greed' },
+  } as const;
+
+  private getAltToken(v?: number | null) {
+    const T = HeroComponent.ALT_TOKENS;
+    if (v == null)  return T.neutral;
+    if (v >= 75)    return T.altseason;
+    if (v <= 25)    return T.bitcoin;
+    return T.neutral;
   }
 
-  badgeColor(v?: number | null): string {
-    if (v == null) return '#6b7280';      // gri
-    if (v >= 75) return '#16a34a';        // yeşil
-    if (v <= 25) return '#b42318';        // kırmızı
-    return '#6b7280';
+  private getRsiToken(v?: number | null) {
+    const T = HeroComponent.RSI_TOKENS;
+    if (v == null)  return T.neutral;
+    if (v >= 70)    return T.overbought;
+    if (v <= 30)    return T.oversold;
+    return T.neutral;
   }
+
+  private getFngToken(v?: number | null) {
+    const T = HeroComponent.FNG_TOKENS;
+    if (v == null)  return T.neutral;
+    if (v <= 25)    return T.extremeFear;
+    if (v <= 45)    return T.fear;
+    if (v <= 55)    return T.neutral;
+    if (v <= 75)    return T.greed;
+    return T.extremeGreed;
+  }
+
+  // Public helpers tüketen template'e açık
+  badgeText(v?: number | null): string  { return this.getAltToken(v).label; }
+  badgeColor(v?: number | null): string { return this.getAltToken(v).bg;    }
 
   go(idx: 0 | 1) {
     if (idx === this.current()) return;
@@ -125,21 +163,13 @@ export class HeroComponent implements OnDestroy {
   // Sol ok: silindir sağa döner → mevcut sağa çıkar, yeni soldan gelir
   prev() { this.direction.set('right'); this.current.set(this.current() === 0 ? 1 : 0); }
 
-  // RSI status label
-  getRsiLabel(v?: number | null): string {
-    if (v == null) return 'Neutral';
-    if (v >= 70) return 'Overbought';
-    if (v <= 30) return 'Oversold';
-    return 'Neutral';
-  }
+  // RSI status label — token'dan gelir, zone rengiyle uyumlu
+  getRsiLabel(v?: number | null): string    { return this.getRsiToken(v).label; }
+  getRsiBgColor(v?: number | null): string  { return this.getRsiToken(v).bg;    }
 
-  // RSI background color
-  getRsiBgColor(v?: number | null): string {
-    if (v == null) return '#6b7280';       // gray
-    if (v >= 70) return '#b45309';         // orange (overbought)
-    if (v <= 30) return '#0ea5e9';         // cyan (oversold)
-    return '#6b7280';                      // gray (neutral)
-  }
+  // FNG badge helpers — gauge segment rengiyle uyumlu
+  getFngBadgeLabel(v?: number | null): string   { return this.getFngToken(v).label; }
+  getFngBadgeColor(v?: number | null): string   { return this.getFngToken(v).bg;    }
 
 
   //basit kısaltma helper'ı (1.2K / 3.4M / 1.1B / 2.0T)
@@ -167,25 +197,17 @@ export class HeroComponent implements OnDestroy {
   }
 
   /**
-   * Get Fear & Greed label based on value
+   * Get Fear & Greed label based on value — token ile senkronize
    */
   getFngLabel(value?: number | null): string {
-    if (value == null) return 'Neutral';
-    if (value <= 25) return 'Extreme Fear';
-    if (value <= 45) return 'Fear';
-    if (value <= 55) return 'Neutral';
-    if (value <= 75) return 'Greed';
-    return 'Extreme Greed';
+    return this.getFngToken(value).label;
   }
 
   /**
-   * Get progress dot color based on altseason value
+   * Get progress dot color based on altseason value — zone rengiyle uyumlu
    */
   getAltProgressColor(value?: number | null): string {
-    if (value == null) return '#6b7280';
-    if (value >= 75) return '#8b5cf6';  // Purple - Altcoin Season
-    if (value >= 25) return '#eab308';  // Yellow - Mixed
-    return '#f97316';                    // Orange - Bitcoin dominant
+    return this.getAltToken(value).bg;
   }
 
   /**
