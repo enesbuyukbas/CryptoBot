@@ -978,6 +978,85 @@
   }
 }
 
+/* ==================== FLIP CARD INTERACTION ====================
+ * perspective() transform fonksiyonu olarak kullanılır —
+ * böylece .metric-card'daki backdrop-filter ile 3D context
+ * etkileşimi engellenir, tüm tarayıcılarda düzgün çalışır.
+ * ==================== */
+
+.metric-card {
+  cursor: pointer;
+}
+
+.metric-card:focus-visible {
+  outline: 2px solid rgba(6, 182, 212, 0.5);
+  outline-offset: 3px;
+}
+
+/* Flip container: grid ile her iki yüz üst üste yerleşir,
+   yükseklik her zaman daha uzun yüzden belirlenir —
+   flip sırasında kart boyutu değişmez. */
+.card-flip-inner {
+  display: grid;
+  grid-template-areas: 'face';
+  flex: 1;
+  transform: perspective(1200px) rotateY(0deg);
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metric-card.is-flipped .card-flip-inner {
+  transform: perspective(1200px) rotateY(180deg);
+}
+
+.card-face {
+  grid-area: face;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-face--back {
+  transform: rotateY(180deg);
+  justify-content: center;
+}
+
+/* Arka yüz içerik stilleri — ön yüzle aynı renk ailesi */
+.card-back-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.42);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.65rem;
+  flex-shrink: 0;
+}
+
+.card-back-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-back-body p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.card-back-body strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+}
+
+.card-back-note {
+  font-size: 0.72rem !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-style: italic;
+}
+
 /* Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .slide {
@@ -993,6 +1072,10 @@
   }
 
   .nav-icon {
+    transition: none;
+  }
+
+  .card-flip-inner {
     transition: none;
   }
 

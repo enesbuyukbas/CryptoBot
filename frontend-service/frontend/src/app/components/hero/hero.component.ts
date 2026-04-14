@@ -35,6 +35,9 @@ export class HeroComponent implements OnDestroy {
   loadingAvgRsi = signal(true);
   errorAvgRsi = signal<string | null>(null);
 
+  // Per-card flip state — her kart bağımsız
+  flippedCards = signal<Record<string, boolean>>({});
+
   // Market cap bar chart verileri (veri gelince change24h'ye göre güncellenir)
   mcapBars = signal<number[]>([0.55, 0.58, 0.61, 0.59, 0.63, 0.66, 0.65]);
 
@@ -162,6 +165,10 @@ export class HeroComponent implements OnDestroy {
   next() { this.direction.set('left'); this.current.set(this.current() === 0 ? 1 : 0); }
   // Sol ok: silindir sağa döner → mevcut sağa çıkar, yeni soldan gelir
   prev() { this.direction.set('right'); this.current.set(this.current() === 0 ? 1 : 0); }
+
+  toggleFlip(card: string): void {
+    this.flippedCards.update(s => ({ ...s, [card]: !s[card] }));
+  }
 
   // RSI status label — token'dan gelir, zone rengiyle uyumlu
   getRsiLabel(v?: number | null): string    { return this.getRsiToken(v).label; }
