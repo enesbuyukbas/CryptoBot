@@ -39,9 +39,36 @@ CryptoBot/
 │   └── requirements.txt      # Python bağımlılıkları
 ├── frontend-service/         # Angular 19 Web Uygulaması
 │   └── frontend/
-│       ├── src/             # TypeScript/HTML kaynakları
+│       ├── src/
+│       │   ├── index.html            # Ana HTML şablonu
+│       │   ├── main.ts               # Bootstrap dosyası
+│       │   ├── styles.css            # Global stiller
+│       │   ├── app/
+│       │   │   ├── app.component.ts       # Ana bileşen (TypeScript)
+│       │   │   ├── app.component.html     # Ana bileşen şablonu
+│       │   │   ├── app.component.css      # Ana bileşen stilleri
+│       │   │   ├── app.config.ts         # Uygulama konfigürasyonu
+│       │   │   ├── app.routes.ts         # Yönlendirme (Routing)
+│       │   │   ├── components/
+│       │   │   │   ├── hero/                # Hero banner bileşeni
+│       │   │   │   ├── footer/              # Footer bileşeni
+│       │   │   │   └── signal-table/        # Sinyal tablosu bileşeni
+│       │   │   ├── pages/
+│       │   │   │   ├── contact/             # İletişim sayfası
+│       │   │   │   └── guide/               # Rehber sayfası
+│       │   │   ├── services/
+│       │   │   │   ├── signal.service.ts    # Sinyal API servisi
+│       │   │   │   └── metrics.service.ts   # Metrikler API servisi
+│       │   │   └── models/
+│       │   │       ├── signal.model.ts       # Signal veri modeli
+│       │   │       ├── signal-filter.model.ts# Filter modeli
+│       │   │       └── metric-card.model.ts  # Metrik kartı modeli
+│       │   └── assets/              # Statik kaynaklar (resimler, vb.)
 │       ├── package.json     # Node.js bağımlılıkları
-│       └── angular.json     # Angular konfigürasyonu
+│       ├── angular.json     # Angular konfigürasyonu
+│       ├── tsconfig.json    # TypeScript konfigürasyonu
+│       ├── proxy.conf.json  # Backend API proxy ayarları
+│       └── README.md        # Frontend-specific README
 └── README.md
 ```
 
