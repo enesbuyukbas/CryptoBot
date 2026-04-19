@@ -1,14 +1,20 @@
-# CryptoBot - Kripto Teknik Analiz ve Ticaret Sinyali Platformu
+# TrendiePilot - Teknik Analiz ve Sinyal Üretim Platformu
 
 Kripto para piyasalarında teknik analiz yaparak otomatik alım-satım sinyalleri üreten, üretilen sinyalleri görselleştiren ve yöneten kapsamlı bir platform.
 
 ## 📋 Proje Özeti
 
-CryptoBot, Binance SPOT piyasasında teknik analiz göstergelerini kullanarak alım-satım sinyalleri üreten bir otomasyondur. Proje, üç ana bileşenden oluşmaktadır:
+TrendiePilot, Binance SPOT piyasasında teknik analiz göstergelerini kullanarak alım-satım sinyalleri üreten bir otomasyondur. Proje, üç ana bileşenden oluşmaktadır:
 
 - **Backend API** (.NET 8 ile ASP.NET Core)
-- **Analiz Botu** (Python ile Binance API entegrasyonu)
+- **Analiz Botu** (Python ile Binance API entegrasyonu - **AWS'de 7/24 çalışmaktadır**)
 - **Web Arayüzü** (Angular 19 ile modern SPA)
+- **Veritabanı** (MongoDB - Sinyal ve pazar veri yönetimi)
+
+### 🌐 Altyapı
+- **Python Analiz Motoru**: AWS EC2 instance üzerinde 7/24 çalıştırılmaktadır
+- **Veritabanı**: MongoDB (sinyal ve analiz verilerinin depolanması)
+- **API Backend**: Cross-platform .NET 8 uygulaması
 
 ---
 
@@ -60,6 +66,7 @@ CryptoBot/
 - **Pazar**: Binance SPOT
 - **Veritabanı**: MongoDB
 - **Komut Satırı**: argparse ile parametrize
+- **Çalıştırma Ortamı**: AWS EC2 (7/24 aktif)
 
 **Başlıca Kütüphaneler**:
 - `pymongo` (MongoDB işlemleri)
@@ -352,13 +359,95 @@ Backend, piyasa verileri için aşağıdaki external API'lerle entegre edilmişt
 
 Sinyal gücü (0-100) aşağıdaki faktörlere göre hesaplanır:
 
-- **EMA Alignment**: Tüm EMA'lar aynı yönde mü?
+- **EMA Alignment**: Tüm EMA'lar aynı yönde mi?
 - **RSI Durumu**: Aşırı alım/satım bölgesinde mi?
 - **Trend Gücü**: ADX değeri (25+ güçlü trend)
 - **Momentum**: MACD ve ROC uyumsuzluğu
 - **Volatilite**: ATR normalleştirilmiş değeri
 
 Daha yüksek puan = Daha güvenilir sinyal
+
+---
+
+## 🌐 Üretim Altyapısı (Production Infrastructure)
+
+### AWS EC2 Deployment
+
+**Python Analiz Motoru 7/24 Çalıştırma**
+
+Bot service, AWS EC2 instance üzerinde 24/7 çalışacak şekilde konfigüre edilmiştir:
+
+```bash
+# AWS EC2 instance'a bağlanın
+ssh -i "your-key.pem" ec2-user@your-instance-ip
+
+# Python environment kurulumu
+python -m venv /opt/cryptobot/venv
+source /opt/cryptobot/venv/bin/activate
+cd /opt/cryptobot/bot-service
+pip install -r requirements.txt
+```
+
+**Cron Job ile Otomatik Çalıştırma**
+
+Bot'un her belirli aralıkta çalışması için cron job ekleyin:
+
+```bash
+# Crontab dosyasını düzenleme
+crontab -e
+
+# Her 15 dakikada bir tüm timeframe'leri analiz et
+*/15 * * * * cd /opt/cryptobot/bot-service && /opt/cryptobot/venv/bin/python main.py --timeframe all >> /var/log/cryptobot.log 2>&1
+
+# Her saatte bir 1h timeframe'ini analiz et
+0 * * * * cd /opt/cryptobot/bot-service && /opt/cryptobot/venv/bin/python main.py --timeframe 1h >> /var/log/cryptobot.log 2>&1
+
+# Günde bir kez 1d timeframe'ini analiz et (saat 00:00)
+0 0 * * * cd /opt/cryptobot/bot-service && /opt/cryptobot/venv/bin/python main.py --timeframe 1d >> /var/log/cryptobot.log 2>&1
+```
+
+### MongoDB Konfigürasyonu
+
+**Veritabanı Yönetimi**
+
+Proje, aşağıdaki MongoDB konfigürasyonunu kullanmaktadır:
+
+```javascript
+// MongoDB Bağlantısı
+MONGODB_URI=mongodb://username:password@mongodb-host:27017/CryptoBot
+
+// Veritabanı Adı: CryptoBot
+// Koleksiyonlar:
+// - signals: Üretilen sinyal verileri
+// - indexes: Performans optimizasyonu için indexleme
+```
+
+**Sinyal Verisi Depolama**
+
+- Tüm üretilen sinyallar MongoDB'ye kaydedilir
+- Her sinyal şunları içerir: symbol, direction, strength, entry price, stop-loss, target price, indicators
+- Timeframe'e göre veri saklama süresi:
+  - `15m`: 24 saat
+  - `1h`: 3 gün
+  - `4h`: 7 gün
+  - `1d`: 30 gün
+
+**MongoDB Koleksiyon İndeksleme**
+
+```javascript
+db.signals.createIndex({ "timeframe": 1, "openedAt": -1 })
+db.signals.createIndex({ "symbol": 1, "openedAt": -1 })
+db.signals.createIndex({ "strength": -1 })
+db.signals.createIndex({ "direction": 1 })
+```
+
+### AWS EC2 Best Practices
+
+1. **Sistemli Güncellemeler**: Haftalık güvenlik güncellemeleri
+2. **Log Yönetimi**: CloudWatch ile sistem ve uygulama loglarının izlenmesi
+3. **Backup**: MongoDB verileri günde en az bir kez yedeklenmeli
+4. **Monitoring**: EC2 instance'ın CPU, bellek ve disk kullanımı izlenmeli
+5. **Security Groups**: Sadece gerekli portlar (MongoDB: 27017) açık olmalı
 
 ---
 
