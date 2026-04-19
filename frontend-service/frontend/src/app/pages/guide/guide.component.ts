@@ -156,7 +156,7 @@ export class GuideComponent implements OnInit, AfterViewInit {
     },
     {
       open: false,
-      q: 'Strength değeri kaç olmalı işlem açmak için?',
+      q: 'İşlem açmak için strength değeri kaç olmalı?',
       a: 'Genel öneri 70 ve üzeri. Daha düşük riskli işlemler için 80+ filtresi kullanmanızı tavsiye ederiz.'
     },
     {
