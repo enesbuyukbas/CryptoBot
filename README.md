@@ -4,7 +4,7 @@ Kripto para piyasalarında teknik analiz yaparak otomatik alım-satım sinyaller
 
 ## 📋 Proje Özeti
 
-TrendiePilot, Binance SPOT piyasasında teknik analiz göstergelerini kullanarak alım-satım sinyalleri üreten bir otomasyondur. Proje, üç ana bileşenden oluşmaktadır:
+TrendiePilot, Binance SPOT piyasasında teknik analiz göstergelerini kullanarak alım-satım sinyalleri üreten bir otomasyondur. Proje, dört ana bileşenden oluşmaktadır:
 
 - **Backend API** (.NET 8 ile ASP.NET Core)
 - **Analiz Botu** (Python ile Binance API entegrasyonu - **AWS'de 7/24 çalışmaktadır**)
@@ -12,9 +12,10 @@ TrendiePilot, Binance SPOT piyasasında teknik analiz göstergelerini kullanarak
 - **Veritabanı** (MongoDB - Sinyal ve pazar veri yönetimi)
 
 ### 🌐 Altyapı
-- **Python Analiz Motoru**: AWS EC2 instance üzerinde 7/24 çalıştırılmaktadır
-- **Veritabanı**: MongoDB (sinyal ve analiz verilerinin depolanması)
+- **Python Analiz Motoru**: AWS Lambda + EventBridge ile serverless olarak çalışmaktadır (4 ayrı rule: 15m / 1h / 4h / 1d)
+- **Veritabanı**: MongoDB Atlas (sinyal ve analiz verilerinin depolanması)
 - **API Backend**: Cross-platform .NET 8 uygulaması
+- **Gerçek Zamanlı Fiyat**: Binance Public API (30s cache ile optimize edilmiş)
 
 ---
 
@@ -57,8 +58,9 @@ CryptoBot/
 │       │   │   │   ├── contact/             # İletişim sayfası
 │       │   │   │   └── guide/               # Rehber sayfası
 │       │   │   ├── services/
-│       │   │   │   ├── signal.service.ts    # Sinyal API servisi
-│       │   │   │   └── metrics.service.ts   # Metrikler API servisi
+│       │   │   │   ├── signal.service.ts         # Sinyal API servisi
+│       │   │   │   ├── metrics.service.ts        # Metrikler API servisi
+│       │   │   │   └── binance-price.service.ts  # Binance anlık fiyat (30s cache)
 │       │   │   └── models/
 │       │   │       ├── signal.model.ts       # Signal veri modeli
 │       │   │       ├── signal-filter.model.ts# Filter modeli
@@ -141,7 +143,22 @@ Bot aşağıdaki teknik analiz göstergelerini kullanarak sinyaller oluşturur:
 - `4h` (4 saat) - Uzun vadeli
 - `1d` (1 gün) - Çok uzun vadeli
 
-### 3. Risk Yönetimi
+### 3. Sinyal Sonuç Takibi (Outcome Tracking)
+
+Her sinyal için sonuç otomatik olarak takip edilir:
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `tp_hit` | boolean | Take-profit hedefine ulaşıldıysa `true` |
+| `sl_hit` | boolean | Stop-loss tetiklendiyse `true` |
+| `outcome_price` | float | Sonucun gerçekleştiği fiyat |
+| `first_price` | float | Sinyalin üretildiği andaki giriş fiyatı |
+
+Frontend'de bu veriler **Outcome** sütununda `TP Hit`, `SL Hit` veya `Open` rozeti olarak gösterilir.
+
+---
+
+### 4. Risk Yönetimi
 
 Her timeframe için ATR tabanlı risk seviyeleri:
 
@@ -160,8 +177,12 @@ TIMEFRAME_RISK_SETTINGS = {
 - `risk_reward` - Risk/Reward oranı
 - `risk_amount` - Risk miktarı
 - `reward_amount` - Beklenen kazanç
+- `first_price` - Sinyalin üretildiği andaki giriş fiyatı
+- `tp_hit` - Take-profit hedefine ulaşıldı mı?
+- `sl_hit` - Stop-loss tetiklendi mi?
+- `outcome_price` - Sonucun gerçekleştiği fiyat seviyesi
 
-### 4. İzlenen Semboller
+### 5. İzlenen Semboller
 
 Binance SPOT piyasasında en çok işlem gören **200 sembol** izlenir.
 
@@ -320,18 +341,15 @@ Backend, piyasa verileri için aşağıdaki external API'lerle entegre edilmişt
   "direction": "BUY",
   "strength": 85,
   "openedAt": ISODate("2026-04-19T10:30:00Z"),
-  "entryPrice": 65000.50,
-  "stopLoss": 64500.25,
-  "targetPrice": 67000.75,
-  "riskReward": 2.0,
-  "indicators": {
-    "ema20": 65100,
-    "ema50": 65200,
-    "rsi": 68,
-    "atr": 250,
-    "adx": 28,
-    "macd": "POSITIVE"
-  }
+  "first_price": 65000.50,
+  "stop_loss": 64500.25,
+  "target_price": 67000.75,
+  "risk_reward": 2.0,
+  "tp_hit": false,
+  "sl_hit": false,
+  "outcome_price": null,
+  "reason": ["EMA_ALIGNMENT", "RSI_OVERSOLD"],
+  "atr": 250
 }
 ```
 
@@ -398,40 +416,34 @@ Daha yüksek puan = Daha güvenilir sinyal
 
 ## 🌐 Üretim Altyapısı (Production Infrastructure)
 
-### AWS EC2 Deployment
+### AWS Lambda Deployment (Serverless)
 
-**Python Analiz Motoru 7/24 Çalıştırma**
+Bot service, Docker container olarak paketlenip **AWS Lambda** üzerinde serverless çalışmaktadır. EC2 instance'a gerek yoktur.
 
-Bot service, AWS EC2 instance üzerinde 24/7 çalışacak şekilde konfigüre edilmiştir:
-
-```bash
-# AWS EC2 instance'a bağlanın
-ssh -i "your-key.pem" ec2-user@your-instance-ip
-
-# Python environment kurulumu
-python -m venv /opt/cryptobot/venv
-source /opt/cryptobot/venv/bin/activate
-cd /opt/cryptobot/bot-service
-pip install -r requirements.txt
-```
-
-**Cron Job ile Otomatik Çalıştırma**
-
-Bot'un her belirli aralıkta çalışması için cron job ekleyin:
+**Deployment Adımları:**
 
 ```bash
-# Crontab dosyasını düzenleme
-crontab -e
+# 1. Docker image build et
+docker build -t cryptobot ./bot-service
 
-# Her 15 dakikada bir tüm timeframe'leri analiz et
-*/15 * * * * cd /opt/cryptobot/bot-service && /opt/cryptobot/venv/bin/python main.py --timeframe all >> /var/log/cryptobot.log 2>&1
+# 2. AWS ECR'ye push et
+aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.eu-central-1.amazonaws.com
+docker tag cryptobot:latest <account-id>.dkr.ecr.eu-central-1.amazonaws.com/cryptobot:latest
+docker push <account-id>.dkr.ecr.eu-central-1.amazonaws.com/cryptobot:latest
 
-# Her saatte bir 1h timeframe'ini analiz et
-0 * * * * cd /opt/cryptobot/bot-service && /opt/cryptobot/venv/bin/python main.py --timeframe 1h >> /var/log/cryptobot.log 2>&1
-
-# Günde bir kez 1d timeframe'ini analiz et (saat 00:00)
-0 0 * * * cd /opt/cryptobot/bot-service && /opt/cryptobot/venv/bin/python main.py --timeframe 1d >> /var/log/cryptobot.log 2>&1
+# 3. Lambda fonksiyonunu güncelle
+aws lambda update-function-code --function-name cryptobot \
+  --image-uri <account-id>.dkr.ecr.eu-central-1.amazonaws.com/cryptobot:latest
 ```
+
+**EventBridge Zamanlaması:**
+
+| Kural | Cron | Timeframe |
+|-------|------|-----------|
+| cryptobot-15m | `*/15 * * * ? *` | 15m |
+| cryptobot-1h | `0 * * * ? *` | 1h |
+| cryptobot-4h | `0 */4 * * ? *` | 4h |
+| cryptobot-1d | `5 0 * * ? *` | 1d |
 
 ### MongoDB Konfigürasyonu
 
@@ -468,13 +480,13 @@ db.signals.createIndex({ "strength": -1 })
 db.signals.createIndex({ "direction": 1 })
 ```
 
-### AWS EC2 Best Practices
+### AWS Lambda Best Practices
 
-1. **Sistemli Güncellemeler**: Haftalık güvenlik güncellemeleri
-2. **Log Yönetimi**: CloudWatch ile sistem ve uygulama loglarının izlenmesi
-3. **Backup**: MongoDB verileri günde en az bir kez yedeklenmeli
-4. **Monitoring**: EC2 instance'ın CPU, bellek ve disk kullanımı izlenmeli
-5. **Security Groups**: Sadece gerekli portlar (MongoDB: 27017) açık olmalı
+1. **Log Yönetimi**: CloudWatch Logs ile Lambda çalışma loglarını izleyin
+2. **Timeout**: Lambda timeout değerini analiz süresine göre ayarlayın (önerilen: 5-10 dk)
+3. **Memory**: 512MB-1024MB arası memory atayın
+4. **MongoDB Atlas IP Whitelist**: Lambda'nın çıkış IP'si yerine `0.0.0.0/0` veya VPC NAT Gateway IP'si eklenebilir
+5. **ECR Image Güncellemesi**: Kod değişikliğinde yeni image push edip Lambda'yı güncelleyin
 
 ---
 
@@ -508,6 +520,12 @@ db.signals.createIndex({ "direction": 1 })
 | API CORS hatası | Backend'de CORS policy konfigürasyonunu doğrulayın |
 | Bot çalışmıyor | Python bağımlılıklarını kontrol edin: `pip install -r requirements.txt` |
 | Frontend API'yi çağıramıyor | proxy.conf.json konfigürasyonunu ve backend URL'sini kontrol edin |
+| Lambda MongoDB'ye bağlanamıyor | Atlas IP whitelist'ine Lambda çıkış IP'sini veya `0.0.0.0/0` ekleyin |
+| Outcome sütunu boş görünüyor | Backend'in yeni alanları döndürdüğünü `/api/signals/filtered` ile doğrulayın |
+| Current fiyat güncellenmiyor | BinancePriceService 30s cache'i; sayfayı yenileyin veya 30s bekleyin |
+| Lambda MongoDB'ye bağlanamıyor | Atlas IP whitelist'ine Lambda çıkış IP'sini veya `0.0.0.0/0` ekleyin |
+| Outcome sütunu boş görünüyor | Backend'in yeni alanları döndürdüğünü `/api/signals/filtered` ile doğrulayın |
+| Current fiyat güncellenmiyor | BinancePriceService 30s cache'i; sayfayı yenileyin veya 30s bekleyin |
 
 ---
 
