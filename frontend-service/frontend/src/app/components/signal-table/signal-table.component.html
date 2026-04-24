@@ -13,10 +13,11 @@
             </span>
           </div>
 
-          <div class="fs-5 fw-semibold mt-1">{{ formatPrice(s.price) }}</div>
+          <div class="fs-5 fw-semibold mt-1">{{ formatPrice(getEntryPrice(s)) }}</div>
           <div class="text-muted small" style="display: flex; align-items: center; gap: 6px;">
             <span>Strength:</span>
             <span [style.color]="getStrengthColor(s.strength)" style="font-weight: 600;">{{ s.strength }}</span>
+            <span class="ms-2" [ngClass]="getOutcomeClass(s)">{{ getOutcomeLabel(s) }}</span>
           </div>
 
           <div class="mt-3 d-flex flex-wrap gap-2 small text-muted">
@@ -131,11 +132,14 @@
           <th>Timeframe</th>
           <th>Direction</th>
           <th>Strength</th>
-          <th>Price</th>
+          <th>Entry</th>
+          <th>Current</th>
+          <th>Change</th>
           <th>Target</th>
           <th>Stop Loss</th>
           <th>Opened At</th>
           <th>Freshness</th>
+          <th>Outcome</th>
           <th>Reasons</th>
         </tr>
       </thead>
@@ -156,11 +160,16 @@
           <td>
             <span [style.color]="getStrengthColor(signal.strength)" style="font-weight: 600;">{{ signal.strength }}</span>
           </td>
-          <td>{{ formatPrice(signal.price) }}</td>
+          <td>{{ formatPrice(getEntryPrice(signal)) }}</td>
+          <td>{{ getCurrentPrice(signal) !== null ? formatPrice(getCurrentPrice(signal)!) : '—' }}</td>
+          <td [ngClass]="getPriceChangeClass(signal)" class="small fw-semibold">
+            {{ getPriceChange(signal) !== null ? ((getPriceChange(signal)! >= 0 ? '+' : '') + getPriceChange(signal)!.toFixed(2) + '%') : '—' }}
+          </td>
           <td>{{ formatPrice(signal.targetPrice) }}</td>
           <td>{{ formatPrice(signal.stopLoss) }}</td>
           <td class="small">{{ formatDateTime(signal.openedAt) }}</td>
           <td class="small">{{ getRelativeFreshness(signal.openedAt) }}</td>
+          <td><span [ngClass]="getOutcomeClass(signal)">{{ getOutcomeLabel(signal) }}</span></td>
           <td class="reasons-cell">
             <span class="reasons-badge cursor-pointer" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);"
                   [attr.data-popover-id]="getReasonPopoverId(signal.symbol, signal.timeframe)"
@@ -225,8 +234,22 @@
           <span class="signal-card-value" [style.color]="getStrengthColor(signal.strength)" style="font-weight: 600;">{{ signal.strength }}</span>
         </div>
         <div class="signal-card-row">
-          <span class="signal-card-label">Price</span>
-          <span class="signal-card-value">{{ formatPrice(signal.price) }}</span>
+          <span class="signal-card-label">Entry</span>
+          <span class="signal-card-value">{{ formatPrice(getEntryPrice(signal)) }}</span>
+        </div>
+        <div class="signal-card-row">
+          <span class="signal-card-label">Current</span>
+          <span class="signal-card-value">{{ getCurrentPrice(signal) !== null ? formatPrice(getCurrentPrice(signal)!) : '—' }}</span>
+        </div>
+        <div class="signal-card-row">
+          <span class="signal-card-label">Change</span>
+          <span class="signal-card-value" [ngClass]="getPriceChangeClass(signal)" style="font-weight: 600;">
+            {{ getPriceChange(signal) !== null ? ((getPriceChange(signal)! >= 0 ? '+' : '') + getPriceChange(signal)!.toFixed(2) + '%') : '—' }}
+          </span>
+        </div>
+        <div class="signal-card-row">
+          <span class="signal-card-label">Outcome</span>
+          <span class="signal-card-value" [ngClass]="getOutcomeClass(signal)">{{ getOutcomeLabel(signal) }}</span>
         </div>
         <div class="signal-card-row">
           <span class="signal-card-label">Target</span>

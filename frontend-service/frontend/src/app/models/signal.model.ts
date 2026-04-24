@@ -5,6 +5,7 @@ export interface Signal {
   strength: number;
   reason: string[];
   price: number;
+  firstPrice?: number | null;   // sinyalin ilk açıldığı fiyat (eski EC2 sinyallerinde yok)
   stopLoss: number;
   targetPrice: number;
   riskReward: number;
@@ -14,4 +15,7 @@ export interface Signal {
   openedAt: string; // ISO datetime
   createdAt: string;
   updatedAt: string;
+  tpHit?: boolean | null;
+  slHit?: boolean | null;
+  outcomePrice?: number | null;
 }

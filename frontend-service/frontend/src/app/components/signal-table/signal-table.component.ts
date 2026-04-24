@@ -1,7 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SignalService } from '../../services/signal.service';
+import { BinancePriceService } from '../../services/binance-price.service';
 import { Signal } from '../../models/signal.model';
 import { SignalFilter, SignalPagedResponse } from '../../models/signal-filter.model';
 
@@ -12,7 +13,7 @@ import { SignalFilter, SignalPagedResponse } from '../../models/signal-filter.mo
   templateUrl: './signal-table.component.html',
   styleUrls: ['./signal-table.component.css']
 })
-export class SignalTableComponent implements OnInit {
+export class SignalTableComponent implements OnInit, OnDestroy {
   // Top signals section (now derived from filtered results)
   top3Signals: Signal[] = [];
 
@@ -35,18 +36,28 @@ export class SignalTableComponent implements OnInit {
   // Loading state
   isLoading: boolean = false;
 
+  // Binance güncel fiyatları
+  currentPrices: Map<string, number> = new Map();
+  private priceRefreshInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly PRICE_REFRESH_MS = 30_000;
+
   // Popover state for reasons display
   openPopoverId: string | null = null;
   popoverPosition: { top: number; left: number } | null = null;
   private scrollListener: (() => void) | null = null;
 
   private signalService = inject(SignalService);
+  private binancePriceService = inject(BinancePriceService);
 
   ngOnInit() {
-    // Load filtered signals with current filter
     this.loadFilteredSignals();
-    // Load multi-timeframe data for availability indicators
     this.loadMultiTimeframeData();
+  }
+
+  ngOnDestroy(): void {
+    if (this.priceRefreshInterval) {
+      clearInterval(this.priceRefreshInterval);
+    }
   }
 
   loadMultiTimeframeData(): void {
@@ -89,6 +100,12 @@ export class SignalTableComponent implements OnInit {
         this.pagedResponse = data;
         this.signals = data.items ?? [];
         this.isLoading = false;
+        // Sayfa/filtre değişse bile yeni sembollerin fiyatını çek
+        this.refreshPrices();
+        // İlk yüklemede interval'i başlat
+        if (!this.priceRefreshInterval) {
+          this.priceRefreshInterval = setInterval(() => this.refreshPrices(), this.PRICE_REFRESH_MS);
+        }
       },
       error: (err) => {
         console.error('Error loading filtered signals:', err);
@@ -469,6 +486,60 @@ export class SignalTableComponent implements OnInit {
     if (strength >= 80) return '#00d395';  // Green - strong signal
     if (strength >= 60) return '#eab308';  // Yellow - moderate signal
     return '#94a3b8';                      // Gray - weak signal
+  }
+
+  // ==================== BİNANCE FİYAT ====================
+
+  loadBinancePrices(signals: Signal[]): void {
+    const symbols = [...new Set(signals.map(s => s.symbol))];
+    if (!symbols.length) return;
+    this.binancePriceService.getPrices(symbols).subscribe(priceMap => {
+      this.currentPrices = priceMap;
+    });
+  }
+
+  /** 30s interval ile çağrılır — sadece mevcut tablodaki sembolleri ister */
+  private refreshPrices(): void {
+    const symbols = [...new Set(this.signals.map(s => s.symbol))];
+    if (!symbols.length) return;
+    this.binancePriceService.getPrices(symbols).subscribe(priceMap => {
+      this.currentPrices = priceMap;
+    });
+  }
+
+  getEntryPrice(signal: Signal): number {
+    return signal.firstPrice ?? signal.price;
+  }
+
+  getCurrentPrice(signal: Signal): number | null {
+    return this.currentPrices.get(signal.symbol) ?? null;
+  }
+
+  getPriceChange(signal: Signal): number | null {
+    const current = this.getCurrentPrice(signal);
+    const entry = this.getEntryPrice(signal);
+    if (current == null || entry === 0) return null;
+    return ((current - entry) / entry) * 100;
+  }
+
+  getPriceChangeClass(signal: Signal): string {
+    const change = this.getPriceChange(signal);
+    if (change == null) return 'text-secondary';
+    return change >= 0 ? 'text-success' : 'text-danger';
+  }
+
+  // ==================== OUTCOME ====================
+
+  getOutcomeLabel(signal: Signal): string {
+    if (signal.tpHit === true) return 'TP Hit';
+    if (signal.slHit === true) return 'SL Hit';
+    return 'Open';
+  }
+
+  getOutcomeClass(signal: Signal): string {
+    if (signal.tpHit === true) return 'outcome-badge outcome-tp';
+    if (signal.slHit === true) return 'outcome-badge outcome-sl';
+    return 'outcome-badge outcome-open';
   }
 }
 
