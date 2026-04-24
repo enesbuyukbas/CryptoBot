@@ -112,7 +112,7 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
         prev_row = df.iloc[-2]
         
         # NaN kontrolü
-        required_fields = ['close', 'adx', 'roc', 'ema20', 'ema50', 'ema200', 'rsi', 'volume', 'atr']
+        required_fields = ['close', 'adx', 'plus_di', 'minus_di', 'roc', 'ema20', 'ema50', 'ema200', 'rsi', 'volume', 'atr', 'close_time']
         for field in required_fields:
             if pd.isna(last_row.get(field)):
                 logger.debug(f"⚠️ {symbol} - {timeframe}: {field} eksik")
@@ -144,6 +144,11 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
         
         trend_up = close > ema200 and ema20 > ema50
         trend_down = close < ema200 and ema20 < ema50
+
+        # ================== DMI YÖN DOĞRULAMASI ==================
+        # +DI > -DI yükseliş yönünü, -DI > +DI düşüş yönünü doğrular
+        plus_di_confirm  = last_row['plus_di'] > last_row['minus_di']
+        minus_di_confirm = last_row['minus_di'] > last_row['plus_di']
         
         # ================== MOMENTUM BELİRLEME ==================
         roc = last_row['roc']
@@ -158,7 +163,7 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
         strength = 0
         
         # BUY Sinyali (DAHA SIKI ŞARTLAR)
-        if trend_up and strong_positive_momentum:
+        if trend_up and strong_positive_momentum and plus_di_confirm:
             direction = "BUY"
             
             # TREND PUANI (0-30)
@@ -219,7 +224,7 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
                 reasons.append("VOLUME_ABOVE_AVG")
         
         # SELL Sinyali (DAHA SIKI ŞARTLAR)
-        elif trend_down and strong_negative_momentum:
+        elif trend_down and strong_negative_momentum and minus_di_confirm:
             direction = "SELL"
             
             # TREND PUANI (0-30)
@@ -316,7 +321,8 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
             "adx": float(last_row['adx']),
             "roc": float(roc),
             "volume_ratio": float(volume_ratio),
-            "opened_at": last_row.name.to_pydatetime() if isinstance(last_row.name, pd.Timestamp) else datetime.now(timezone.utc)
+            # Mumun kapanış zamanı — sinyalin üretildiği anki kapanmış mumun UTC zamanı
+            "opened_at": last_row['close_time'].to_pydatetime() if isinstance(last_row.get('close_time'), pd.Timestamp) else datetime.now(timezone.utc)
         }
         
         # Log mesajı

@@ -57,6 +57,15 @@ SIGNAL_STRENGTH_MODERATE = 50
 # MongoDB'de sinyal saklama süresi (saniye)
 SIGNAL_TTL_SECONDS = 30 * 24 * 60 * 60  # 30 gün
 
+# Aynı yönde sinyal maksimum güncelleme süresi (saniye)
+# Bu süreyi geçen sinyal "yeni" sayılır, mevcut belge üzerine yazılmaz
+SIGNAL_MAX_AGE_SECONDS = {
+    "15m": 4 * 3600,       # 4 saat
+    "1h":  24 * 3600,      # 1 gün
+    "4h":  4 * 24 * 3600,  # 4 gün
+    "1d":  14 * 24 * 3600, # 14 gün
+}
+
 # ================== PARALEL İŞLEME AYARLARI ==================
 MAX_WORKERS = 5  # ThreadPoolExecutor için maksimum worker sayısı
 

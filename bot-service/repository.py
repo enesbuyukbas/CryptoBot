@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from pymongo.errors import DuplicateKeyError, ConnectionFailure
 
-from config import MONGODB_URI, SIGNAL_TTL_SECONDS
+from config import MONGODB_URI, SIGNAL_TTL_SECONDS, SIGNAL_MAX_AGE_SECONDS
 
 logger = logging.getLogger(__name__)
 
@@ -127,10 +127,12 @@ def save_signal_if_new(signal: Dict) -> bool:
             "direction": "BUY",
             "strength": 85,
             "reason": ["TREND_UP", "MOMENTUM_POSITIVE"],
-            "price": 43250.5,
-            "opened_at": datetime (UTC) - mumun kapanış zamanı,
-            "created_at": datetime (UTC) - DB'ye yazıldığı an,
-            "updated_at": datetime (UTC) - Son güncellenme
+            "price": 43250.5,          - güncel fiyat (her güncellemede değişir)
+            "first_price": 43000.0,    - sinyalin ilk açıldığı fiyat (hiç değişmez)
+            "opened_at": datetime,     - güncel mumun kapanış zamanı (UTC)
+            "first_opened_at": datetime - sinyalin ilk açıldığı mumun kapanış zamanı (UTC, hiç değişmez)
+            "created_at": datetime,    - DB'ye ilk yazıldığı an (UTC)
+            "updated_at": datetime     - son güncellenme (UTC)
         }
     """
     if not signal:
@@ -161,7 +163,22 @@ def save_signal_if_new(signal: Dict) -> bool:
         
         # ================== AYNI DIRECTION İSE GÜNCELLE ==================
         if last_signal and last_signal.get("direction") == direction:
+            # Sinyal yaşını kontrol et
+            max_age = SIGNAL_MAX_AGE_SECONDS.get(timeframe, 86400)
+            signal_age = (current_time - last_signal["created_at"].replace(tzinfo=timezone.utc)).total_seconds()
+
+            if signal_age > max_age:
+                # Sinyal çok eski — aynı yönde olsa bile yeni kayıt aç
+                logger.info(
+                    f"⏰ {symbol} - {timeframe} | {direction} sinyali {signal_age/3600:.1f} saat önce açıldı, "
+                    f"max_age={max_age/3600:.0f}h aşıldı → yeni kayıt açılıyor"
+                )
+                last_signal = None  # aşağıdaki else bloğunu tetikler
+
+        if last_signal and last_signal.get("direction") == direction:
             # Mevcut kaydı güncelle
+            # NOT: first_price ve first_opened_at HİÇBİR ZAMAN güncellenmez —
+            # ilk sinyalin fiyatı ve zamanı korunur
             update_result = db.signals.update_one(
                 {"_id": last_signal["_id"]},
                 {
@@ -204,6 +221,9 @@ def save_signal_if_new(signal: Dict) -> bool:
                 "reward_amount": signal.get("reward_amount"),
                 "atr": signal.get("atr"),
                 "opened_at": signal.get("opened_at", current_time),
+                # İlk sinyal anındaki fiyat ve zaman — hiçbir zaman üzerine yazılmaz
+                "first_price": signal.get("price"),
+                "first_opened_at": signal.get("opened_at", current_time),
                 "created_at": current_time,
                 "updated_at": current_time
             }
