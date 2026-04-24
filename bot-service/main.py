@@ -74,13 +74,10 @@ def show_top_signals(limit: int = 10):
         top_signals = get_top_signals_by_strength(limit=limit)
         
         if not top_signals:
-            logger.info("\n📊 Henüz sinyal bulunamadı.")
+            logger.info("Henüz sinyal bulunamadı")
             return
-        
-        logger.info(f"\n{'='*80}")
-        logger.info(f"🏆 EN GÜÇLÜ {len(top_signals)} SİNYAL:")
-        logger.info(f"{'='*80}")
-        
+
+        logger.info(f"Top {len(top_signals)} sinyal:")
         for i, sig in enumerate(top_signals, 1):
             symbol = sig.get('symbol', 'N/A')
             timeframe = sig.get('timeframe', 'N/A')
@@ -88,20 +85,7 @@ def show_top_signals(limit: int = 10):
             strength = sig.get('strength', 0)
             price = sig.get('price', 0)
             reasons = ', '.join(sig.get('reason', []))
-            
-            # Direction için emoji
-            direction_emoji = "🟢" if direction == "BUY" else "🔴" if direction == "SELL" else "⚪"
-            
-            # Güç seviyesi için bar
-            bar_length = int(strength / 5)  # 100 -> 20 karakter
-            strength_bar = "█" * bar_length + "░" * (20 - bar_length)
-            
-            logger.info(f"\n  {i}. {direction_emoji} {symbol} ({timeframe})")
-            logger.info(f"     Yön: {direction} | Güç: {strength}% {strength_bar}")
-            logger.info(f"     Fiyat: ${price:.4f}")
-            logger.info(f"     Nedenler: {reasons}")
-        
-        logger.info(f"\n{'='*80}\n")
+            logger.info(f"  {i}. {symbol} {timeframe} {direction} {strength}% ${price:.4f} | {reasons}")
         
     except Exception as e:
         logger.error(f"❌ Top sinyal gösterme hatası: {e}")
@@ -114,10 +98,7 @@ def main():
     # Başlangıç zamanı
     start_time = datetime.now()
     
-    logger.info(f"\n{'#'*80}")
-    logger.info(f"#  KRİPTO TEKNİK ANALİZ BOTU")
-    logger.info(f"#  Başlangıç: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
-    logger.info(f"{'#'*80}\n")
+    logger.info(f"▶ Bot başlıyor | {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Argümanları parse et
     try:
@@ -161,13 +142,45 @@ def main():
     end_time = datetime.now()
     duration = (end_time - start_time).total_seconds()
     
-    logger.info(f"\n{'#'*80}")
-    logger.info(f"#  İŞLEM TAMAMLANDI")
-    logger.info(f"#  Bitiş: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
-    logger.info(f"#  Süre: {duration:.2f} saniye")
-    logger.info(f"{'#'*80}\n")
+    logger.info(f"✔ Tamamlandı | süre={duration:.1f}s")
     
     return 0
+
+
+def handler(event: dict, context) -> dict:
+    """
+    AWS Lambda entry point.
+    EventBridge payload: {"timeframe": "1h"}
+    """
+    start_time = datetime.now()
+    timeframe = event.get("timeframe", "").strip()
+
+    valid = {"15m", "1h", "4h", "1d", "all"}
+    if timeframe not in valid:
+        logger.error(f"Geçersiz timeframe: '{timeframe}'. Beklenen: {valid}")
+        return {"status": "error", "message": f"Invalid timeframe: {timeframe}"}
+
+    logger.info(f"▶ Lambda başlıyor | timeframe={timeframe}")
+
+    try:
+        init_indexes()
+    except Exception as e:
+        logger.error(f"MongoDB başlatma hatası: {e}")
+        return {"status": "error", "message": str(e)}
+
+    try:
+        if timeframe == "all":
+            from config import TIMEFRAMES
+            stats = run_job_for_all_timeframes(TIMEFRAMES)
+        else:
+            stats = run_job_for_timeframe(timeframe)
+    except Exception as e:
+        logger.error(f"İşlem hatası: {e}")
+        return {"status": "error", "message": str(e)}
+
+    duration = (datetime.now() - start_time).total_seconds()
+    logger.info(f"✔ Tamamlandı | süre={duration:.1f}s")
+    return {"status": "ok", "timeframe": timeframe, "duration_seconds": round(duration, 1)}
 
 
 if __name__ == "__main__":

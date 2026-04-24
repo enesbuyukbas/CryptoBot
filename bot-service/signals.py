@@ -7,6 +7,15 @@ from config import SIGNAL_STRENGTH_STRONG, SIGNAL_STRENGTH_MODERATE
 
 logger = logging.getLogger(__name__)
 
+# ================== TIMEFRAME ROC EŞİKLERİ ==================
+# Daha uzun timeframe → daha güçlü momentum beklentisi
+TIMEFRAME_ROC_THRESHOLDS = {
+    "15m": 1.5,
+    "1h":  2.0,
+    "4h":  2.5,
+    "1d":  3.0,
+}
+
 # ================== TIMEFRAME RİSK AYARLARI ==================
 TIMEFRAME_RISK_SETTINGS = {
     "15m": {"atr_sl": 1.5, "rr": 1.5},
@@ -125,9 +134,9 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
             logger.debug(f"⚠️ {symbol} - {timeframe}: ADX yetersiz ({last_row['adx']:.2f} < 30)")
             return None
         
-        # 2. Volume kontrolü (son 20 mumun ortalamasının üstünde olmalı)
+        # 2. Volume kontrolü — ortalamanın üzerinde olmalı (momentum onayı)
         avg_volume = df['volume'].tail(20).mean()
-        if last_row['volume'] < avg_volume * 0.8:  # %80'den fazla olmalı
+        if last_row['volume'] < avg_volume * 1.0:
             logger.debug(f"⚠️ {symbol} - {timeframe}: Volume düşük")
             return None
         
@@ -137,13 +146,14 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
             return None
         
         # ================== TREND BELİRLEME ==================
-        close = last_row['close']
-        ema20 = last_row['ema20']
-        ema50 = last_row['ema50']
+        close  = last_row['close']
+        ema20  = last_row['ema20']
+        ema50  = last_row['ema50']
         ema200 = last_row['ema200']
-        
-        trend_up = close > ema200 and ema20 > ema50
-        trend_down = close < ema200 and ema20 < ema50
+        # EMA Fan sıralaması: fiyat tüm EMA'ların üzerinde/altında VE
+        # kısa vade > orta vade > uzun vade (textbook bullish/bearish hizalama)
+        trend_up   = close > ema20 > ema50 > ema200
+        trend_down = close < ema20 < ema50 < ema200
 
         # ================== DMI YÖN DOĞRULAMASI ==================
         # +DI > -DI yükseliş yönünü, -DI > +DI düşüş yönünü doğrular
@@ -153,26 +163,23 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
         # ================== MOMENTUM BELİRLEME ==================
         roc = last_row['roc']
         
-        # Momentum daha güçlü olmalı
-        strong_positive_momentum = roc > 2
-        strong_negative_momentum = roc < -2
+        # Timeframe bazlı ROC eşiği
+        roc_threshold = TIMEFRAME_ROC_THRESHOLDS.get(timeframe, 2.0)
+        strong_positive_momentum = roc > roc_threshold
+        strong_negative_momentum = roc < -roc_threshold
         
         # ================== SİNYAL OLUŞTURMA ==================
         direction = None
         reasons = []
         strength = 0
         
-        # BUY Sinyali (DAHA SIKI ŞARTLAR)
+        # BUY Sinyali
         if trend_up and strong_positive_momentum and plus_di_confirm:
             direction = "BUY"
-            
-            # TREND PUANI (0-30)
-            if close > ema20 > ema50 > ema200:  # Mükemmel sıralama
-                strength += 30
-                reasons.append("TREND_PERFECT")
-            elif close > ema200:
-                strength += 20
-                reasons.append("TREND_UP")
+
+            # TREND PUANI — trend_up zaten tam EMA fan sıralaması gerektiriyor
+            strength += 30
+            reasons.append("TREND_PERFECT")
             
             # MOMENTUM PUANI (0-25)
             if roc > 5:
@@ -223,17 +230,13 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
                 strength += 3
                 reasons.append("VOLUME_ABOVE_AVG")
         
-        # SELL Sinyali (DAHA SIKI ŞARTLAR)
+        # SELL Sinyali
         elif trend_down and strong_negative_momentum and minus_di_confirm:
             direction = "SELL"
-            
-            # TREND PUANI (0-30)
-            if close < ema20 < ema50 < ema200:  # Mükemmel sıralama
-                strength += 30
-                reasons.append("TREND_PERFECT")
-            elif close < ema200:
-                strength += 20
-                reasons.append("TREND_DOWN")
+
+            # TREND PUANI — trend_down zaten tam EMA fan sıralaması gerektiriyor
+            strength += 30
+            reasons.append("TREND_PERFECT")
             
             # MOMENTUM PUANI (0-25)
             if roc < -5:
@@ -292,9 +295,9 @@ def generate_signal(df: pd.DataFrame, symbol: str, timeframe: str) -> Optional[D
         # Gücü 0-100 arasında sınırla
         strength = max(0, min(100, strength))
         
-        # Minimum güç kontrolü (en az 50 olmalı)
-        if strength < 50:
-            logger.debug(f"⚠️ {symbol} - {timeframe}: Sinyal gücü yetersiz ({strength}% < 50%)")
+        # Minimum güç kontrolü (en az 60 olmalı)
+        if strength < 60:
+            logger.debug(f"⚠️ {symbol} - {timeframe}: Sinyal gücü yetersiz ({strength}% < 60%)")
             return None
         
         # ================== ATR TABANLI STOP & TARGET HESAPLA ==================

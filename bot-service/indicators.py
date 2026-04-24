@@ -47,11 +47,6 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
         df['ema50'] = talib.EMA(df['close'], timeperiod=EMA_PERIODS['EMA50'])
         df['ema200'] = talib.EMA(df['close'], timeperiod=EMA_PERIODS['EMA200'])
         
-        # Basit hareketli ortalamalar (karşılaştırma için)
-        df['ma200'] = df['close'].rolling(window=EMA_PERIODS['EMA200']).mean()
-        df['ma50'] = df['close'].rolling(window=EMA_PERIODS['EMA50']).mean()
-        df['ma20'] = df['close'].rolling(window=EMA_PERIODS['EMA20']).mean()
-        
         # ================== RSI ==================
         df['rsi'] = talib.RSI(df['close'], timeperiod=RSI_PERIOD)
         
@@ -76,30 +71,6 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
         
         # ================== ROC (Rate of Change - Momentum) ==================
         df['roc'] = talib.ROC(df['close'], timeperiod=ROC_PERIOD)
-        
-        # ================== BOLLINGER BANDS (Opsiyonel) ==================
-        df['bb_upper'], df['bb_middle'], df['bb_lower'] = talib.BBANDS(
-            df['close'],
-            timeperiod=20,
-            nbdevup=2,
-            nbdevdn=2,
-            matype=0
-        )
-        
-        # ================== STOCHASTIC (Opsiyonel) ==================
-        df['stoch_k'], df['stoch_d'] = talib.STOCH(
-            df['high'],
-            df['low'],
-            df['close'],
-            fastk_period=14,
-            slowk_period=3,
-            slowk_matype=0,
-            slowd_period=3,
-            slowd_matype=0
-        )
-        
-        # ================== MOMENTUM (Manuel Hesaplama) ==================
-        df['momentum'] = df['close'].pct_change(10) * 100  # 10 periyot öncesine göre % değişim
         
         logger.debug(f"✅ İndikatörler hesaplandı (toplam: {len(df)} satır)")
         

@@ -7,7 +7,7 @@ from typing import List, Optional
 
 from config import (
     SPOT_URL,
-    TOP_SYMBOL_LIMIT,
+    MIN_QUOTE_VOLUME,
     CANDLE_LIMIT,
     REQUEST_TIMEOUT,
     MAX_RETRIES,
@@ -17,19 +17,27 @@ from config import (
 logger = logging.getLogger(__name__)
 
 
-def get_spot_symbols(limit: int = TOP_SYMBOL_LIMIT) -> List[str]:
+# Stablecoin ve fiat bazlı tokenler — sinyal üretiminden hariç tutulur
+STABLECOIN_BASES = {
+    "USDC", "BUSD", "TUSD", "USDP", "FDUSD", "USD1", "DAI", "FRAX",
+    "PYUSD", "AEUR", "EURT", "EURS", "USDD", "GUSD", "USDX", "SUSD",
+    "OUSD", "USDN", "USDK", "USDJ", "CUSD", "CEUR", "BEUR", "IDRT",
+    "VAI", "USTC", "USDN", "TRIBE", "FEI",
+}
+
+
+def get_spot_symbols() -> List[str]:
     """
-    Binance SPOT piyasasından en yüksek hacimli USDT paritelerini getirir.
-    
-    Args:
-        limit: Getirilecek maksimum sembol sayısı
-        
+    Binance SPOT piyasasından likit USDT paritelerini getirir.
+    2 API çağrısı ile tüm hacimleri toplu olarak alır (~500 bireysel çağrı yerine).
+    Sıra tabanlı kesme yerine minimum 24h hacim eşiği (MIN_QUOTE_VOLUME) kullanır.
+
     Returns:
         USDT paritesi olan sembol listesi (hacme göre sıralı)
     """
     for attempt in range(MAX_RETRIES):
         try:
-            # Exchange bilgilerini çek
+            # 1. TRADING durumundaki USDT paritelerini al (set → O(1) arama)
             response = requests.get(
                 f"{SPOT_URL}/api/v3/exchangeInfo",
                 timeout=REQUEST_TIMEOUT
@@ -37,50 +45,33 @@ def get_spot_symbols(limit: int = TOP_SYMBOL_LIMIT) -> List[str]:
             response.raise_for_status()
             data = response.json()
 
-            # USDT paritelerini ve TRADING durumunda olanları filtrele
-            symbols = [
-                symbol['symbol'] 
-                for symbol in data['symbols']
-                if symbol['symbol'].endswith('USDT') 
-                and symbol['status'] == 'TRADING'
+            trading_usdt = {
+                s['symbol']
+                for s in data['symbols']
+                if s['symbol'].endswith('USDT') and s['status'] == 'TRADING'
+            }
+            logger.info(f"✅ {len(trading_usdt)} USDT paritesi bulundu")
+
+            # 2. TEK çağrı ile tüm 24h hacimleri al (symbol parametresi yok → bulk)
+            response = requests.get(
+                f"{SPOT_URL}/api/v3/ticker/24hr",
+                timeout=REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            all_tickers = response.json()
+
+            # 3. USDT + TRADING filtresi, stablecoin hariç, minimum hacim eşiği uygula
+            usdt_tickers = [
+                (t['symbol'], float(t['quoteVolume']))
+                for t in all_tickers
+                if t['symbol'] in trading_usdt
+                and float(t['quoteVolume']) >= MIN_QUOTE_VOLUME
+                and t['symbol'][:-4] not in STABLECOIN_BASES
             ]
 
-            logger.info(f"✅ {len(symbols)} USDT paritesi bulundu")
+            result = [symbol for symbol, _ in sorted(usdt_tickers, key=lambda x: x[1], reverse=True)]
 
-            # 24 saatlik hacimleri çek
-            volumes = {}
-            for i, symbol in enumerate(symbols):
-                try:
-                    response = requests.get(
-                        f"{SPOT_URL}/api/v3/ticker/24hr",
-                        params={"symbol": symbol},
-                        timeout=REQUEST_TIMEOUT
-                    )
-                    response.raise_for_status()
-                    volume_data = response.json()
-                    volumes[symbol] = float(volume_data["quoteVolume"])
-                    
-                    # Rate limiting için kısa bekleme
-                    if i % 50 == 0 and i > 0:
-                        time.sleep(0.5)
-                    else:
-                        time.sleep(0.05)
-                        
-                except Exception as e:
-                    logger.warning(f"⚠️ {symbol} hacim verisi alınamadı: {e}")
-                    volumes[symbol] = 0
-                    continue
-
-            # Hacme göre sırala ve ilk N tanesini al
-            sorted_symbols = sorted(
-                volumes.items(),
-                key=lambda x: x[1],
-                reverse=True
-            )[:limit]
-            
-            result = [symbol for symbol, _ in sorted_symbols]
-            logger.info(f"✅ Top {len(result)} yüksek hacimli sembol seçildi")
-            
+            logger.info(f"✅ {len(result)} likit sembol bulundu (min hacim: ${MIN_QUOTE_VOLUME:,})")
             return result
 
         except Exception as e:

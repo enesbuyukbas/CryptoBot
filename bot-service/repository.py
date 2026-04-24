@@ -224,6 +224,11 @@ def save_signal_if_new(signal: Dict) -> bool:
                 # İlk sinyal anındaki fiyat ve zaman — hiçbir zaman üzerine yazılmaz
                 "first_price": signal.get("price"),
                 "first_opened_at": signal.get("opened_at", current_time),
+                # Sonuç takibi — her run'da check edilir, TP/SL geçildiyse set edilir
+                "tp_hit": None,
+                "sl_hit": None,
+                "outcome_price": None,
+                "outcome_checked_at": None,
                 "created_at": current_time,
                 "updated_at": current_time
             }

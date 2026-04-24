@@ -18,7 +18,7 @@ SPOT_URL = os.getenv("SPOT_URL", "https://api.binance.com")
 
 # ================== TIMEFRAME VE SEMBOL AYARLARI ==================
 TIMEFRAMES = ["15m", "1h", "4h", "1d"]
-TOP_SYMBOL_LIMIT = 200  # İzlenecek sembol sayısı
+MIN_QUOTE_VOLUME = 500_000  # Minimum 24h USDT hacmi — bu altındaki coinler likit değil
 CANDLE_LIMIT = 200      # Çekilecek mum sayısı
 
 # ================== TEKNİK ANALİZ PARAMETRELERİ ==================
@@ -70,12 +70,12 @@ SIGNAL_MAX_AGE_SECONDS = {
 MAX_WORKERS = 5  # ThreadPoolExecutor için maksimum worker sayısı
 
 # ================== LOGGING AYARLARI ==================
+# Lambda/CloudWatch: FileHandler yok (filesystem ephemeral), timestamp yok (CloudWatch ekler)
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('crypto_bot.log', encoding='utf-8')
     ]
 )
 

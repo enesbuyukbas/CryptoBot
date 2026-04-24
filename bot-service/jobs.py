@@ -1,13 +1,14 @@
 import logging
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from typing import List
 
-from config import MAX_WORKERS
+from config import MAX_WORKERS, CANDLE_LIMIT, SPOT_URL, REQUEST_TIMEOUT
 from binance_client import get_spot_symbols, fetch_klines
 from indicators import add_indicators
 from signals import generate_signal
-from repository import save_signal_if_new
-from config import MAX_WORKERS, CANDLE_LIMIT
+from repository import save_signal_if_new, get_db
 
 logger = logging.getLogger(__name__)
 
@@ -95,12 +96,10 @@ def run_job_for_timeframe(timeframe: str) -> dict:
             "signals_found": 42
         }
     """
-    logger.info(f"\n{'='*60}")
-    logger.info(f"🚀 {timeframe.upper()} için işlem başlatılıyor...")
-    logger.info(f"{'='*60}")
-    
+    logger.info(f"▶ {timeframe.upper()} işlem başlıyor")
+
     # 1. Sembolleri al
-    symbols = get_spot_symbols(limit=200)
+    symbols = get_spot_symbols()
     
     if not symbols:
         logger.error(f"❌ {timeframe}: Sembol listesi alınamadı")
@@ -141,12 +140,7 @@ def run_job_for_timeframe(timeframe: str) -> dict:
                 logger.error(f"❌ {symbol} - {timeframe} future hatası: {e}")
     
     # 3. İstatistikleri raporla
-    logger.info(f"\n{'='*60}")
-    logger.info(f"📈 {timeframe.upper()} İSTATİSTİKLERİ:")
-    logger.info(f"   Toplam Sembol: {len(symbols)}")
-    logger.info(f"   ✅ Başarılı: {successful}")
-    logger.info(f"   ❌ Başarısız: {failed}")
-    logger.info(f"{'='*60}\n")
+    logger.info(f"✔ {timeframe.upper()} tamamlandı | sembol={len(symbols)} başarılı={successful} başarısız={failed} sinyal={signals_found}")
     
     return {
         "timeframe": timeframe,
@@ -167,31 +161,106 @@ def run_job_for_all_timeframes(timeframes: List[str]) -> dict:
     Returns:
         Tüm timeframe'lerin istatistikleri
     """
-    logger.info(f"\n{'#'*60}")
-    logger.info(f"🚀 TÜM TIMEFRAME'LER İÇİN İŞLEM BAŞLATILIYOR")
-    logger.info(f"   Timeframes: {', '.join(timeframes)}")
-    logger.info(f"{'#'*60}\n")
-    
+    logger.info(f"▶ Run başlıyor | timeframes={', '.join(timeframes)}")
+
+    # Her run başında açık sinyallerin TP/SL durumunu kontrol et
+    check_signal_outcomes()
+
     all_stats = {}
-    
+
     for tf in timeframes:
         stats = run_job_for_timeframe(tf)
         all_stats[tf] = stats
     
     # Genel rapor
-    logger.info(f"\n{'#'*60}")
-    logger.info(f"📊 GENEL ÖZET:")
     total_processed = sum(s['total'] for s in all_stats.values())
     total_successful = sum(s['successful'] for s in all_stats.values())
     total_failed = sum(s['failed'] for s in all_stats.values())
-    
-    logger.info(f"   Toplam İşlem: {total_processed}")
-    logger.info(f"   ✅ Başarılı: {total_successful}")
-    logger.info(f"   ❌ Başarısız: {total_failed}")
-    
-    for tf, stats in all_stats.items():
-        logger.info(f"   {tf}: {stats['successful']}/{stats['total']}")
-    
-    logger.info(f"{'#'*60}\n")
+    tf_summary = ' | '.join(f"{tf}:{s['signals_found']}sig" for tf, s in all_stats.items())
+    logger.info(f"✔ Run tamamlandı | işlenen={total_processed} başarılı={total_successful} başarısız={total_failed} | {tf_summary}")
     
     return all_stats
+
+
+# ================== TP/SL SONUÇ TAKİBİ ==================
+
+def check_signal_outcomes() -> dict:
+    """
+    Açık sinyallerin TP/SL durumunu kontrol eder.
+    Her bot çalışmasında bir kez çağrılmalıdır.
+
+    - tp_hit / sl_hit henüz set edilmemiş sinyalleri sorgular
+    - Güncel fiyatı Binance'ten çeker
+    - TP veya SL geçildiyse günceller
+
+    Returns:
+        {"checked": int, "tp_hits": int, "sl_hits": int, "still_open": int}
+    """
+    db = get_db()
+    now = datetime.now(timezone.utc)
+
+    open_signals = list(db.signals.find({
+        "tp_hit": None,
+        "sl_hit": None,
+        "target_price": {"$ne": None},
+        "stop_loss": {"$ne": None}
+    }))
+
+    checked = tp_hits = sl_hits = still_open = 0
+
+    for signal in open_signals:
+        symbol = signal.get("symbol")
+        try:
+            response = requests.get(
+                f"{SPOT_URL}/api/v3/ticker/price",
+                params={"symbol": symbol},
+                timeout=REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            current_price = float(response.json()["price"])
+            checked += 1
+
+            direction = signal["direction"]
+            tp = signal["target_price"]
+            sl = signal["stop_loss"]
+
+            if direction == "BUY":
+                tp_hit = current_price >= tp
+                sl_hit = current_price <= sl
+            elif direction == "SELL":
+                tp_hit = current_price <= tp
+                sl_hit = current_price >= sl
+            else:
+                continue
+
+            if tp_hit or sl_hit:
+                db.signals.update_one(
+                    {"_id": signal["_id"]},
+                    {"$set": {
+                        "tp_hit": tp_hit,
+                        "sl_hit": sl_hit,
+                        "outcome_price": current_price,
+                        "outcome_checked_at": now
+                    }}
+                )
+                if tp_hit:
+                    tp_hits += 1
+                    logger.info(f"✅ TP | {symbol} - {signal['timeframe']} | {direction} | ${current_price:.4f}")
+                else:
+                    sl_hits += 1
+                    logger.info(f"❌ SL | {symbol} - {signal['timeframe']} | {direction} | ${current_price:.4f}")
+            else:
+                still_open += 1
+                db.signals.update_one(
+                    {"_id": signal["_id"]},
+                    {"$set": {"outcome_checked_at": now}}
+                )
+
+        except Exception as e:
+            logger.warning(f"⚠️ {symbol} outcome kontrolü başarısız: {e}")
+
+    logger.info(
+        f"📊 Outcome check: {checked} kontrol | "
+        f"✅ TP: {tp_hits} | ❌ SL: {sl_hits} | ⏳ Açık: {still_open}"
+    )
+    return {"checked": checked, "tp_hits": tp_hits, "sl_hits": sl_hits, "still_open": still_open}
