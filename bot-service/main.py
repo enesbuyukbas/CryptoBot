@@ -17,7 +17,7 @@ from datetime import datetime
 
 from config import TIMEFRAMES
 from repository import init_indexes, get_top_signals_by_strength
-from jobs import run_job_for_timeframe, run_job_for_all_timeframes
+from jobs import run_job_for_timeframe, run_job_for_all_timeframes, check_signal_outcomes
 
 logger = logging.getLogger(__name__)
 
@@ -173,6 +173,7 @@ def handler(event: dict, context) -> dict:
             from config import TIMEFRAMES
             stats = run_job_for_all_timeframes(TIMEFRAMES)
         else:
+            check_signal_outcomes()          # açık sinyallerin TP/SL durumunu güncelle
             stats = run_job_for_timeframe(timeframe)
     except Exception as e:
         logger.error(f"İşlem hatası: {e}")
