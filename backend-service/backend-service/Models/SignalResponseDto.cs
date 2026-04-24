@@ -40,6 +40,9 @@ namespace backend_service.Models
         [JsonPropertyName("atr")]
         public double Atr { get; set; }
 
+        [JsonPropertyName("firstPrice")]
+        public double? FirstPrice { get; set; }
+
         [JsonPropertyName("openedAt")]
         public DateTime OpenedAt { get; set; }
 
@@ -48,5 +51,14 @@ namespace backend_service.Models
 
         [JsonPropertyName("updatedAt")]
         public DateTime UpdatedAt { get; set; }
+
+        [JsonPropertyName("tpHit")]
+        public bool? TpHit { get; set; }
+
+        [JsonPropertyName("slHit")]
+        public bool? SlHit { get; set; }
+
+        [JsonPropertyName("outcomePrice")]
+        public double? OutcomePrice { get; set; }
     }
 }

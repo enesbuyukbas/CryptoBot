@@ -63,6 +63,7 @@ namespace backend_service.Controllers
                 Strength = signal.Strength,
                 Reason = signal.Reason,
                 Price = signal.Price,
+                FirstPrice = signal.FirstPrice,
                 StopLoss = signal.StopLoss,
                 TargetPrice = signal.TargetPrice,
                 RiskReward = signal.RiskReward,
@@ -71,7 +72,10 @@ namespace backend_service.Controllers
                 Atr = signal.Atr,
                 OpenedAt = signal.OpenedAt,
                 CreatedAt = signal.CreatedAt,
-                UpdatedAt = signal.UpdatedAt
+                UpdatedAt = signal.UpdatedAt,
+                TpHit = signal.TpHit,
+                SlHit = signal.SlHit,
+                OutcomePrice = signal.OutcomePrice
             };
         }
     }

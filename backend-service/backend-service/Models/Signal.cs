@@ -56,6 +56,10 @@ public class Signal
     [JsonPropertyName("atr")]
     public double Atr { get; set; }
 
+    [BsonElement("first_price")]
+    [JsonPropertyName("first_price")]
+    public double? FirstPrice { get; set; }
+
     [BsonElement("opened_at")]
     [JsonPropertyName("opened_at")]
     public DateTime OpenedAt { get; set; }
@@ -67,4 +71,16 @@ public class Signal
     [BsonElement("updated_at")]
     [JsonPropertyName("updated_at")]
     public DateTime UpdatedAt { get; set; }
+
+    [BsonElement("tp_hit")]
+    [JsonPropertyName("tp_hit")]
+    public bool? TpHit { get; set; }
+
+    [BsonElement("sl_hit")]
+    [JsonPropertyName("sl_hit")]
+    public bool? SlHit { get; set; }
+
+    [BsonElement("outcome_price")]
+    [JsonPropertyName("outcome_price")]
+    public double? OutcomePrice { get; set; }
 }
