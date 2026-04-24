@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 })
 export class AppComponent {
   title = 'Crypto Signal Dashboard';
+  isNavOpen = false;
 
   constructor(public router: Router) {}
 

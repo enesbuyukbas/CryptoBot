@@ -61,4 +61,34 @@
   color: #06b6d4;
 }
 
+/* ==================== NAVBAR COLLAPSE (Angular-managed) ==================== */
 
+/* On large screens always show the nav */
+@media (min-width: 992px) {
+  .navbar-collapse {
+    display: flex !important;
+    flex-basis: auto;
+  }
+}
+
+/* On small screens: hide by default, show when .show is present */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    display: none;
+    width: 100%;
+  }
+
+  .navbar-collapse.show {
+    display: block;
+  }
+
+  .navbar-nav {
+    flex-direction: column;
+    padding: 0.5rem 0;
+  }
+
+  .navbar-nav .nav-link {
+    padding: 0.5rem 0;
+    border-bottom: none;
+  }
+}

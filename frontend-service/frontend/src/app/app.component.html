@@ -10,14 +10,17 @@
         <span class="logo-slogan">Navigating the Market</span>
       </div>
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+    <button class="navbar-toggler" type="button"
+            (click)="isNavOpen = !isNavOpen"
+            [attr.aria-expanded]="isNavOpen"
+            aria-label="Menüyü aç/kapat">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
+    <div class="navbar-collapse" [class.show]="isNavOpen" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Ana Sayfa</a></li>
-        <li class="nav-item"><a class="nav-link" routerLink="/guide" routerLinkActive="active">Rehber</a></li>
-        <li class="nav-item"><a class="nav-link" routerLink="/contact" routerLinkActive="active">İletişim</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="isNavOpen = false">Ana Sayfa</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/guide" routerLinkActive="active" (click)="isNavOpen = false">Rehber</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/contact" routerLinkActive="active" (click)="isNavOpen = false">İletişim</a></li>
       </ul>
     </div>
   </div>

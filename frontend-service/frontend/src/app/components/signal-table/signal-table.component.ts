@@ -360,28 +360,40 @@ export class SignalTableComponent implements OnInit {
     return active;
   }
 
+  /**
+   * Desktop pagination — always returns exactly 7 items when totalPages > 7.
+   * Layout stays stable as the user navigates.
+   *
+   *  cur ≤ 4        → [1, 2, 3, 4, 5, -1, total]
+   *  cur ≥ total-3  → [1, -1, t-4, t-3, t-2, t-1, total]
+   *  middle         → [1, -1, cur-1, cur, cur+1, -1, total]
+   */
   getPageNumbers(): number[] {
     if (!this.pagedResponse) return [1];
+    const total = this.pagedResponse.totalPages;
+    const cur   = this.currentPage;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (cur <= 4)          return [1, 2, 3, 4, 5, -1, total];
+    if (cur >= total - 3)  return [1, -1, total - 4, total - 3, total - 2, total - 1, total];
+    return [1, -1, cur - 1, cur, cur + 1, -1, total];
+  }
 
-    const totalPages = this.pagedResponse.totalPages;
-    const current = this.currentPage;
-    const pages: number[] = [];
-
-    // Show page numbers around current page
-    const start = Math.max(1, current - 2);
-    const end = Math.min(totalPages, current + 2);
-
-    if (start > 1) pages.push(1);
-    if (start > 2) pages.push(-1); // -1 represents ellipsis
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    if (end < totalPages - 1) pages.push(-1); // -1 represents ellipsis
-    if (end < totalPages) pages.push(totalPages);
-
-    return pages;
+  /**
+   * Mobile pagination — always returns exactly 5 items when totalPages > 5.
+   * Page 1 is always pinned as the first button.
+   *
+   *  cur <= 2       → [1, 2, 3, -1, total]
+   *  cur >= total-1 → [1, -1, total-2, total-1, total]
+   *  middle         → [1, -1, cur, -1, total]
+   */
+  getMobilePageNumbers(): number[] {
+    if (!this.pagedResponse) return [1];
+    const total = this.pagedResponse.totalPages;
+    const cur   = this.currentPage;
+    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+    if (cur <= 2)          return [1, 2, 3, -1, total];
+    if (cur >= total - 1)  return [1, -1, total - 2, total - 1, total];
+    return [1, -1, cur, -1, total];
   }
 
   getMin = Math.min;

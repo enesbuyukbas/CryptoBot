@@ -27,10 +27,13 @@
     <div class="slide" [class.active]="current() === 1" [class.inactive]="current() !== 1">
       <div class="metrics-container container-fluid">
         <h2 class="metrics-title">🌍 Global Market Metrics</h2>
-        <div class="metrics-grid">
+        <div class="metrics-grid"
+             [class.dir-metric-left]="metricDirection() === 'left'"
+             [class.dir-metric-right]="metricDirection() === 'right'">
           <!-- Card 1: Fear & Greed Gauge -->
           <div class="metric-card metric-card--fng"
                [class.is-flipped]="flippedCards()['fng']"
+               [class.metric-card--mobile-inactive]="currentMetric() !== 0"
                (click)="toggleFlip('fng')"
                (keydown.enter)="toggleFlip('fng')"
                (keydown.space)="$event.preventDefault(); toggleFlip('fng')"
@@ -109,6 +112,7 @@
           <!-- Card 2: Global Market Cap Bar Chart -->
           <div class="metric-card metric-card--mcap"
                [class.is-flipped]="flippedCards()['mcap']"
+               [class.metric-card--mobile-inactive]="currentMetric() !== 1"
                (click)="toggleFlip('mcap')"
                (keydown.enter)="toggleFlip('mcap')"
                (keydown.space)="$event.preventDefault(); toggleFlip('mcap')"
@@ -174,6 +178,7 @@
           <!-- Card 3: Altcoin Season Progress Bar -->
           <div class="metric-card metric-card--alt"
                [class.is-flipped]="flippedCards()['alt']"
+               [class.metric-card--mobile-inactive]="currentMetric() !== 2"
                (click)="toggleFlip('alt')"
                (keydown.enter)="toggleFlip('alt')"
                (keydown.space)="$event.preventDefault(); toggleFlip('alt')"
@@ -260,6 +265,7 @@
           <!-- Card 4: Average RSI Color Scale -->
           <div class="metric-card metric-card--rsi"
                [class.is-flipped]="flippedCards()['rsi']"
+               [class.metric-card--mobile-inactive]="currentMetric() !== 3"
                (click)="toggleFlip('rsi')"
                (keydown.enter)="toggleFlip('rsi')"
                (keydown.space)="$event.preventDefault(); toggleFlip('rsi')"
@@ -341,6 +347,17 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Mobile metric navigation (≤768px only): dots only, hero arrows handle prev/next -->
+        <div class="metrics-mobile-nav">
+          <div class="metrics-dots-inner">
+            <button *ngFor="let i of [0,1,2,3]"
+                    class="metrics-dot-inner"
+                    [class.active]="currentMetric() === i"
+                    (click)="goMetric(i)"
+                    [attr.aria-label]="'Metric ' + (i+1)"></button>
           </div>
         </div>
       </div>

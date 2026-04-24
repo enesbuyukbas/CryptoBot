@@ -203,8 +203,19 @@
    RESPONSIVE
    ============================================ */
 
-/* Tablet */
-@media (max-width: 768px) {
+/* Tablet (768px–1024px): keep 4-col grid, just tighten spacing */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .footer-upper {
+    padding: 36px 0 32px;
+  }
+
+  .footer-upper .footer-container {
+    gap: 24px;
+  }
+}
+
+/* Small tablet / large phone (below 768px) */
+@media (max-width: 767px) {
   .footer-upper {
     padding: 36px 0 32px;
   }
@@ -216,6 +227,12 @@
 
   .footer-brand {
     grid-column: 1 / -1;
+  }
+
+  /* Reset explicit column placement so 2-col grid can flow naturally */
+  .footer-links,
+  .footer-contact {
+    grid-column: auto;
   }
 
   .footer-tagline {
@@ -239,13 +256,14 @@
     text-align: center;
   }
 
-  .footer-tagline {
-    margin: 0 auto;
-  }
-
   .footer-links,
   .footer-contact {
+    grid-column: auto;
     text-align: center;
+  }
+
+  .footer-tagline {
+    margin: 0 auto;
   }
 
   .footer-bottom-inner {

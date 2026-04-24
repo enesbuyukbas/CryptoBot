@@ -108,9 +108,30 @@
   }
 }
 
+/* Metric card enter animations (mobile carousel) — shorter translateX for contained cards */
+@keyframes metricEnterFromRight {
+  from { transform: translateX(60px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes metricEnterFromLeft {
+  from { transform: translateX(-60px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* Mobile slide exit animations — fade + short translate to avoid overflow flash */
+@keyframes mobileExitToRight {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(40px); opacity: 0; }
+}
+@keyframes mobileExitToLeft {
+  from { transform: translateX(0);     opacity: 1; }
+  to   { transform: translateX(-40px); opacity: 0; }
+}
+
 /* Hareket tercihine saygı */
 @media (prefers-reduced-motion: reduce) {
   .slide { animation: none !important; }
+  .metric-card { animation: none !important; }
 }
 
 /* ==================== SLIDE 1: HERO CONTENT ==================== */
@@ -418,45 +439,138 @@
   box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.4);
 }
 
-/* ==================== RESPONSIVE ==================== */
+/* ==================== RESPONSIVE — LAYOUT BREAKPOINTS ==================== */
+
+/* ── 768px and below ────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  /* Hero grows with content instead of being clipped at a fixed vh */
   .hero-section {
+    height: auto;
     min-height: 50vh;
-    height: 50vh;
   }
 
-  .metrics-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
+  /* Slider: grid layout so all slides stack in the same cell (grid-area: 1/1).
+     Height = tallest slide. Transforms won't shift layout this way. */
+  .hero-slider {
+    height: auto;
+    display: grid;
+  }
+
+  /* All slides occupy the same cell — they overlap like position:absolute
+     but the container still grows with content height. */
+  .slide {
+    grid-area: 1/1;
+    position: relative;
+    inset: auto;
+    display: grid;
+    height: auto;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 2;
+  }
+
+  .slide.inactive {
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Re-enable slide animations on mobile */
+  .dir-right .slide.active {
+    animation: enterFromLeft 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .dir-left .slide.active {
+    animation: enterFromRight 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .dir-right .slide.inactive {
+    animation: mobileExitToRight 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .dir-left .slide.inactive {
+    animation: mobileExitToLeft 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
   .metric-value {
     font-size: 1.75rem;
   }
 
+  /* Hero slide arrows: keep at sides, smaller size */
   .nav-arrow {
-    width: 40px;
-    height: 40px;
-  }
-
-  .nav-icon {
-    width: 18px;
-    height: 18px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
   }
 
   .nav-prev {
-    left: 14px;
+    left: 8px;
   }
 
   .nav-next {
-    right: 14px;
+    right: 8px;
+  }
+
+  .nav-icon {
+    width: 16px;
+    height: 16px;
   }
 }
 
+/* ── Tablet 2-col metrics (577px – 768px) ───────────────────────────────── */
+@media (min-width: 577px) and (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* No carousel — all 4 cards visible, no nav dots needed */
+  .metrics-mobile-nav {
+    display: none;
+  }
+}
+
+/* ── Mobile metric carousel (≤ 576px) ──────────────────────────────────── */
+@media (max-width: 576px) {
+  /* Bottom padding so the indicator dots don't overlap the last card */
+  .metrics-container {
+    padding-bottom: 56px;
+  }
+
+  /* Single card visible at a time — metric carousel */
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  /* Hide inactive metric cards */
+  .metric-card--mobile-inactive {
+    display: none;
+  }
+
+  /* Metric card enter animation — triggered by direction class on parent */
+  .dir-metric-left .metric-card:not(.metric-card--mobile-inactive) {
+    animation: metricEnterFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .dir-metric-right .metric-card:not(.metric-card--mobile-inactive) {
+    animation: metricEnterFromLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Show mobile metric navigation bar (dots only) */
+  .metrics-mobile-nav {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+/* ── 480px and below ────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .hero-section {
-    min-height: 45vh;
-    height: 45vh;
+    min-height: 40vh;
   }
 
   .hero-title {
@@ -468,9 +582,9 @@
     line-height: 1.4;
   }
 
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+  /* Extra bottom padding for slide-indicator dots */
+  .metrics-container {
+    padding-bottom: 60px;
   }
 
   .metric-value {
@@ -479,24 +593,6 @@
 
   .card-label {
     font-size: 0.8rem;
-  }
-
-  .nav-arrow {
-    width: 36px;
-    height: 36px;
-  }
-
-  .nav-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  .nav-prev {
-    left: 10px;
-  }
-
-  .nav-next {
-    right: 10px;
   }
 
   .metric-card {
@@ -1063,6 +1159,80 @@
   font-size: 0.72rem !important;
   color: rgba(255, 255, 255, 0.4) !important;
   font-style: italic;
+}
+
+/* ==================== MOBILE METRIC CAROUSEL NAVIGATION ==================== */
+
+/* Hidden by default on desktop */
+.metrics-mobile-nav {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 0.75rem 0 0;
+  flex-shrink: 0;
+}
+
+.metrics-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(13, 27, 42, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(14px);
+  transition: background 0.22s ease, border-color 0.22s ease, color 0.22s ease;
+}
+
+.metrics-nav-btn:hover {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: rgba(6, 182, 212, 0.38);
+  color: #fff;
+}
+
+.metrics-nav-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.4);
+}
+
+.metrics-nav-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.metrics-dots-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metrics-dot-inner {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s ease, width 0.3s ease, border-radius 0.3s ease;
+}
+
+.metrics-dot-inner.active {
+  background: #06b6d4;
+  border-color: rgba(6, 182, 212, 0.35);
+  width: 20px;
+  border-radius: 3px;
+}
+
+.metrics-dot-inner:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.4);
 }
 
 /* Respect prefers-reduced-motion */

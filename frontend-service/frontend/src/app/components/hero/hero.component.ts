@@ -38,6 +38,11 @@ export class HeroComponent implements OnDestroy {
   // Per-card flip state — her kart bağımsız
   flippedCards = signal<Record<string, boolean>>({});
 
+  // Mobile metric carousel index (0–3)
+  currentMetric = signal<number>(0);
+  // Direction of metric card transition on mobile
+  metricDirection = signal<'left' | 'right' | null>(null);
+
   // Market cap bar chart verileri (veri gelince change24h'ye göre güncellenir)
   mcapBars = signal<number[]>([0.55, 0.58, 0.61, 0.59, 0.63, 0.66, 0.65]);
 
@@ -161,14 +166,69 @@ export class HeroComponent implements OnDestroy {
     this.direction.set(idx > this.current() ? 'right' : 'left');
     this.current.set(idx);
   }
-  // Sağ ok: silindir sola döner → mevcut sola çıkar, yeni sağdan gelir
-  next() { this.direction.set('left'); this.current.set(this.current() === 0 ? 1 : 0); }
-  // Sol ok: silindir sağa döner → mevcut sağa çıkar, yeni soldan gelir
-  prev() { this.direction.set('right'); this.current.set(this.current() === 0 ? 1 : 0); }
+
+  // On mobile (≤768px), arrows cycle through: Intro → M0 → M1 → M2 → M3 → Intro → ...
+  next() {
+    const onMobile = typeof window !== 'undefined' && window.innerWidth <= 576;
+    if (onMobile) {
+      if (this.current() === 1) {
+        if (this.currentMetric() < 3) {
+          this.metricDirection.set('left');
+          this.currentMetric.update(i => i + 1);
+          return;
+        } else {
+          // M3 → back to intro, reset metric for next entry
+          this.currentMetric.set(0);
+          this.direction.set('left');
+          this.current.set(0);
+          return;
+        }
+      } else {
+        // Intro → M0
+        this.currentMetric.set(0);
+        this.direction.set('left');
+        this.current.set(1);
+        return;
+      }
+    }
+    this.direction.set('left');
+    this.current.set(this.current() === 0 ? 1 : 0);
+  }
+
+  // On mobile, reverse cycle: Intro → M3 → M2 → M1 → M0 → Intro → ...
+  prev() {
+    const onMobile = typeof window !== 'undefined' && window.innerWidth <= 576;
+    if (onMobile) {
+      if (this.current() === 1) {
+        if (this.currentMetric() > 0) {
+          this.metricDirection.set('right');
+          this.currentMetric.update(i => i - 1);
+          return;
+        } else {
+          // M0 → back to intro
+          this.direction.set('right');
+          this.current.set(0);
+          return;
+        }
+      } else {
+        // Intro → M3 (enter from the end when going backwards)
+        this.currentMetric.set(3);
+        this.direction.set('right');
+        this.current.set(1);
+        return;
+      }
+    }
+    this.direction.set('right');
+    this.current.set(this.current() === 0 ? 1 : 0);
+  }
 
   toggleFlip(card: string): void {
     this.flippedCards.update(s => ({ ...s, [card]: !s[card] }));
   }
+
+  prevMetric() { this.metricDirection.set('right'); this.currentMetric.update(i => i === 0 ? 3 : i - 1); }
+  nextMetric() { this.metricDirection.set('left');  this.currentMetric.update(i => i === 3 ? 0 : i + 1); }
+  goMetric(idx: number) { this.metricDirection.set(idx > this.currentMetric() ? 'left' : 'right'); this.currentMetric.set(idx); }
 
   // RSI status label — token'dan gelir, zone rengiyle uyumlu
   getRsiLabel(v?: number | null): string    { return this.getRsiToken(v).label; }

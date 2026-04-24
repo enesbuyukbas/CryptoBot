@@ -110,11 +110,6 @@
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
 }
 
-/* Reasons Cell - Container for badge and popover */
-.reasons-cell {
-  /* No special positioning needed for fixed popover */
-}
-
 /* Reasons Popover - Dark Theme */
 .reasons-popover {
   position: fixed;
@@ -287,12 +282,14 @@
   background: var(--bg-secondary);
   border-radius: 0.75rem;
   border: 1px solid var(--border-color);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .table-responsive .table {
   margin: 0;
+  min-width: 900px;
 }
 
 /* ============================================
@@ -680,7 +677,8 @@
   background: transparent;
   border-radius: 12px;
   border: none;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: none;
 }
 
@@ -725,15 +723,27 @@
   color: var(--text-primary);
   border: none;
   border-bottom: 1px solid #1a2f4a;
-  padding: 0.875rem 0.75rem;
-  vertical-align: middle;
+  padding: 1.1rem 0.75rem 0.75rem;
+  vertical-align: top;
   background: inherit;
+  height: 72px;
 }
 
 /* Coin name - bold white */
 .table tbody td:first-child {
   color: #f1f5f9;
   font-weight: 600;
+}
+
+/* Reasons cell — prevent badge from wrapping/squishing */
+.table tbody .reasons-cell {
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.reasons-badge {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 /* Numeric values - monospace, secondary color */
@@ -870,4 +880,210 @@
   color: var(--text-primary) !important;
 }
 
+/* ============================================
+   RESPONSIVE — Desktop Table vs Mobile Cards
+   ============================================ */
+
+/* Desktop (> 1024px): show table, hide cards */
+.desktop-table { display: block; }
+.mobile-signal-list { display: none; }
+
+/* Tablet + Mobile (≤ 1024px): hide table, show cards */
+@media (max-width: 1024px) {
+  .desktop-table { display: none; }
+  .mobile-signal-list { display: block; }
+
+  /* Strength button group — prevent overflow */
+  .btn-group {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .btn-group .btn-sm {
+    flex: 1 1 auto;
+    min-width: 3rem;
+    border-radius: 8px !important;
+  }
+}
+
+/* ── Tablet card layout (768px – 1024px) ─────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* 3-column card grid on tablet */
+  .mobile-signal-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .signal-mobile-card {
+    margin-bottom: 0;
+  }
+
+  /* Slightly larger text on tablet */
+  .signal-card-label {
+    font-size: 11px;
+  }
+
+  .signal-card-value {
+    font-size: 0.9rem;
+  }
+
+  .signal-card-symbol {
+    font-size: 1.05rem;
+  }
+
+  /* Filter cols: 2-per-row on tablet */
+  .card-body {
+    padding: 1rem 1.25rem;
+  }
+}
+
+/* ============================================
+   MOBILE SIGNAL CARDS
+   ============================================ */
+
+.signal-mobile-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  margin-bottom: 0.625rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: border-color 0.2s ease;
+}
+
+.signal-mobile-card:hover {
+  border-color: rgba(6, 182, 212, 0.35);
+}
+
+.signal-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+
+.signal-card-symbol {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+
+.signal-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.signal-card-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.signal-card-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.signal-card-value {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.signal-card-reasons {
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.625rem;
+}
+
+/* Tighten up on very small phones */
+@media (max-width: 576px) {
+  .signal-mobile-card {
+    padding: 0.75rem;
+  }
+
+  .signal-card-body {
+    gap: 0.4rem 0.875rem;
+  }
+
+  .signal-card-value {
+    font-size: 0.8125rem;
+  }
+}
+
+/* ============================================
+   PAGINATION — MOBILE RESPONSIVE
+   ============================================ */
+
+/* Pagination info text — override Bootstrap text-muted for dark theme */
+.pagination-wrapper .text-muted {
+  color: var(--text-secondary, #94a3b8) !important;
+}
+
+/* Nav arrow buttons (prev/next): fixed square, icon centered */
+.page-link--nav {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Desktop text nav buttons (Previous / Next) — override fixed square */
+.page-link--nav.page-link--text {
+  width: auto;
+  min-width: auto;
+  padding: 0.375rem 0.75rem;
+  gap: 6px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .pagination-wrapper {
+    padding: 12px 0;
+    gap: 8px;
+  }
+
+  /* Scrollable row — buttons never wrap, container clips */
+  .pagination {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    /* hide scrollbar visually but keep scrollable */
+    scrollbar-width: none;
+  }
+
+  .pagination::-webkit-scrollbar {
+    display: none;
+  }
+
+  .page-link {
+    min-width: 30px;
+    padding: 0.3rem 0.45rem;
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+
+  .page-link--nav {
+    min-width: 30px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .page-link--nav svg {
+    width: 14px;
+    height: 14px;
+  }
+}
 
