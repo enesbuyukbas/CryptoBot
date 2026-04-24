@@ -644,4 +644,34 @@
   .step-connector {
     display: none;
   }
+
+  .faq-list {
+    gap: 8px;
+  }
+
+  .faq-question {
+    padding: 0 16px;
+    font-size: 15px;
+    line-height: 1.4;
+    height: 68px;
+    align-items: center;
+  }
+
+  .faq-arrow {
+    font-size: 11px;
+    margin-left: 10px;
+    flex-shrink: 0;
+  }
+
+  .faq-answer {
+    padding: 0 16px;
+  }
+
+  .faq-item.open .faq-answer {
+    padding: 0 16px 16px;
+  }
+
+  .faq-answer p {
+    font-size: 13px;
+  }
 }

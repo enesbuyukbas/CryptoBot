@@ -74,6 +74,30 @@ export class GuideComponent implements OnInit, AfterViewInit {
       example: '4h ago → 4 saat önce oluştu'
     },
     {
+      icon: '💰', name: 'Entry (Giriş Fiyatı)', active: false,
+      short: 'Sinyalin ilk açıldığı andaki fiyat',
+      detail: 'Sinyal ilk oluştuğunda coin hangi fiyattaydı. Güncellenmez, sabittir. Hedef ve stop loss bu fiyata göre hesaplanmıştır.',
+      example: 'Entry: $0.0447 → Bu fiyattan işlem planlanmış'
+    },
+    {
+      icon: '📡', name: 'Current (Güncel Fiyat)', active: false,
+      short: 'Coinin anlık piyasa fiyatı',
+      detail: 'Binance\'dan canlı olarak çekilen güncel fiyat. Her 30 saniyede bir otomatik güncellenir.',
+      example: 'Current: $0.0512 → Şu an piyasadaki fiyat'
+    },
+    {
+      icon: '📊', name: 'Change (Değişim)', active: false,
+      short: 'Giriş fiyatından bu yana yüzde değişim',
+      detail: 'Entry fiyatına göre mevcut fiyatın ne kadar değiştiğini gösterir. Yeşil = kâr yönünde, Kırmızı = zarar yönünde.',
+      example: '+5.2% → Giriş fiyatından %5.2 yükselde'
+    },
+    {
+      icon: '🏆', name: 'Outcome (Sonuç)', active: false,
+      short: 'Sinyalin TP veya SL\'e ulaşıp ulaşmadığı',
+      detail: 'Sistem her çalıştığında açık sinyallerin fiyatını kontrol eder. Hedef fiyata ulaşıldıysa TP Hit, stop loss seviyesi geçildiyse SL Hit gösterilir.',
+      example: 'TP Hit → Hedef fiyata ulaşıldı | SL Hit → Stop loss tetiklendi | Open → Henüz sonuçlanmadı'
+    },
+    {
       icon: '🏷️', name: 'Reasons (Nedenler)', active: false,
       short: 'Sinyali tetikleyen göstergeler',
       detail: 'Her etiket bir teknik analiz göstergesini temsil eder. Ne kadar çok ve çeşitli etiket varsa sinyal o kadar sağlamdır.',
@@ -178,6 +202,16 @@ export class GuideComponent implements OnInit, AfterViewInit {
       open: false,
       q: 'Bu sinyaller yatırım tavsiyesi midir?',
       a: 'Hayır. Platformumuz teknik analiz verileri sunar, yatırım tavsiyesi vermez. Tüm kararlar kullanıcıya aittir. Kripto para piyasaları yüksek risk içerir.'
+    },
+    {
+      open: false,
+      q: 'Entry ve Current fiyat arasındaki fark ne anlama geliyor?',
+      a: 'Entry, sinyalin ilk oluştuğu andaki fiyattır ve değişmez. Current ise Binance\'dan anlık çekilen güncel fiyattır. İkisi arasındaki fark, Change sütununda yüzde olarak gösterilir.'
+    },
+    {
+      open: false,
+      q: 'Outcome sütunu nasıl çalışıyor?',
+      a: 'Sistem her 15 dakikada bir tüm açık sinyallerin fiyatını kontrol eder. Fiyat hedef seviyeye ulaşmışsa TP Hit, stop loss seviyesini geçmişse SL Hit olarak işaretlenir. Open durumu sinyalin henüz sonuçlanmadığını gösterir.'
     },
   ];
 
