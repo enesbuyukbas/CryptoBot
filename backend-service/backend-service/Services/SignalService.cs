@@ -19,18 +19,26 @@ namespace backend_service.Services
         public async Task<List<Signal>> GetSignalsAsync() =>
             await _signalsCollection.Find(signal => true).ToListAsync();
 
-        public async Task<List<Signal>> GetTopSignalsAsync() =>
-            await _signalsCollection.Find(signal => true)
+        public async Task<List<Signal>> GetTopSignalsAsync()
+        {
+            // Sadece açık sinyalleri getir (tp_hit ve sl_hit her ikisi de null olmalı)
+            var filter = Builders<Signal>.Filter.And(
+                Builders<Signal>.Filter.Eq(s => s.TpHit, null),
+                Builders<Signal>.Filter.Eq(s => s.SlHit, null)
+            );
+            return await _signalsCollection.Find(filter)
                 .SortByDescending(s => s.Strength)
                 .ThenByDescending(s => s.OpenedAt)
                 .Limit(3)
                 .ToListAsync();
+        }
 
         public async Task<SignalPagedResponseDto> GetFilteredSignalsAsync(
             string timeframe,
             string? symbol = null,
             string? direction = null,
             int? minStrength = null,
+            string? status = null,
             int page = 1,
             int pageSize = 25)
         {
@@ -38,15 +46,18 @@ namespace backend_service.Services
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 1000) pageSize = 25;
 
-            // Determine freshness window based on timeframe
-            var cutoffDate = timeframe switch
-            {
-                "15m" => DateTime.UtcNow.AddHours(-24),
-                "1h" => DateTime.UtcNow.AddDays(-3),
-                "4h" => DateTime.UtcNow.AddDays(-7),
-                "1d" => DateTime.UtcNow.AddDays(-30),
-                _ => DateTime.UtcNow.AddHours(-24) // default to 24h
-            };
+            // Determine freshness window based on timeframe and status
+            // Closed signals: up to 30 days (matches MongoDB TTL)
+            var cutoffDate = status == "closed"
+                ? DateTime.UtcNow.AddDays(-30)
+                : timeframe switch
+                {
+                    "15m" => DateTime.UtcNow.AddHours(-24),
+                    "1h" => DateTime.UtcNow.AddDays(-3),
+                    "4h" => DateTime.UtcNow.AddDays(-7),
+                    "1d" => DateTime.UtcNow.AddDays(-30),
+                    _ => DateTime.UtcNow.AddHours(-24)
+                };
 
             // Build base filter
             var filterBuilder = Builders<Signal>.Filter;
@@ -72,6 +83,18 @@ namespace backend_service.Services
                 filters.Add(filterBuilder.Gte(s => s.Strength, minStrength.Value));
             }
 
+            if (status == "open")
+            {
+                filters.Add(filterBuilder.Eq(s => s.TpHit, null));
+                filters.Add(filterBuilder.Eq(s => s.SlHit, null));
+            }
+            else if (status == "closed")
+            {
+                var tpClosed = filterBuilder.Ne(s => s.TpHit, null);
+                var slClosed = filterBuilder.Ne(s => s.SlHit, null);
+                filters.Add(filterBuilder.Or(tpClosed, slClosed));
+            }
+
             var combinedFilter = filterBuilder.And(filters);
 
             // Get all matching signals
@@ -79,11 +102,20 @@ namespace backend_service.Services
                 .Find(combinedFilter)
                 .ToListAsync();
 
-            // Keep only latest signal per symbol
-            var latestPerSymbol = allSignals
-                .GroupBy(s => s.Symbol)
-                .Select(g => g.OrderByDescending(s => s.OpenedAt).First())
-                .ToList();
+            // Açık sinyaller: symbol başına yalnızca en son kayıt göster
+            // Kapanmış sinyaller: tüm geçmiş kayıtları göster (her biri ayrı sinyal)
+            List<Signal> latestPerSymbol;
+            if (status == "closed")
+            {
+                latestPerSymbol = allSignals;
+            }
+            else
+            {
+                latestPerSymbol = allSignals
+                    .GroupBy(s => s.Symbol)
+                    .Select(g => g.OrderByDescending(s => s.OpenedAt).First())
+                    .ToList();
+            }
 
             // Sort: openedAt desc, then strength desc
             var sorted = latestPerSymbol

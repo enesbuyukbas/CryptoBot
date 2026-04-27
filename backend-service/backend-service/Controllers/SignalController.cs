@@ -37,6 +37,7 @@ namespace backend_service.Controllers
             [FromQuery] string? symbol = null,
             [FromQuery] string? direction = null,
             [FromQuery] int? minStrength = null,
+            [FromQuery] string? status = null,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 25)
         {
@@ -48,7 +49,7 @@ namespace backend_service.Controllers
             }
 
             var result = await _signalService.GetFilteredSignalsAsync(
-                timeframe, symbol, direction, minStrength, page, pageSize);
+                timeframe, symbol, direction, minStrength, status, page, pageSize);
 
             return Ok(result);
         }
