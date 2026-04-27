@@ -163,6 +163,15 @@ def save_signal_if_new(signal: Dict) -> bool:
         
         # ================== AYNI DIRECTION İSE GÜNCELLE ==================
         if last_signal and last_signal.get("direction") == direction:
+            # Kapatılmış sinyal ise (tp_hit veya sl_hit set edilmişse) yeni kayıt aç
+            if last_signal.get("tp_hit") is not None or last_signal.get("sl_hit") is not None:
+                logger.info(
+                    f"🔁 {symbol} - {timeframe} | {direction} sinyali zaten kapandı "
+                    f"(tp_hit={last_signal.get('tp_hit')}, sl_hit={last_signal.get('sl_hit')}) → yeni kayıt açılıyor"
+                )
+                last_signal = None  # aşağıdaki else bloğunu tetikler
+
+        if last_signal and last_signal.get("direction") == direction:
             # Sinyal yaşını kontrol et
             max_age = SIGNAL_MAX_AGE_SECONDS.get(timeframe, 86400)
             signal_age = (current_time - last_signal["created_at"].replace(tzinfo=timezone.utc)).total_seconds()
@@ -187,12 +196,8 @@ def save_signal_if_new(signal: Dict) -> bool:
                         "price": signal.get("price"),
                         "reason": signal.get("reason"),
                         "opened_at": signal.get("opened_at"),
-                        "stop_loss": signal.get("stop_loss"),
-                        "target_price": signal.get("target_price"),
-                        "risk_reward": signal.get("risk_reward"),
-                        "risk_amount": signal.get("risk_amount"),
-                        "reward_amount": signal.get("reward_amount"),
-                        "atr": signal.get("atr"),
+                        # stop_loss, target_price, risk_reward, risk_amount, reward_amount, atr
+                        # ilk açılıştaki değerler korunur — fiyat değişse bile üzerine yazılmaz
                         "updated_at": current_time
                     }
                 }

@@ -13,23 +13,14 @@ from repository import save_signal_if_new, get_db
 logger = logging.getLogger(__name__)
 
 
-def process_single_symbol(symbol: str, timeframe: str) -> bool:
+def process_single_symbol(symbol: str, timeframe: str) -> str:
     """
     Tek bir sembol için işlem yapar.
     
-    İşlem Adımları:
-    1. Binance'ten 200 mum verisi çek
-    2. İndikatörleri hesapla
-    3. Sinyal üret
-    4. Sinyal varsa MongoDB'ye kaydet
-    
-    Args:
-        symbol: Trading sembolü (örn: "BTCUSDT")
-        timeframe: Zaman dilimi (örn: "15m")
-        
     Returns:
-        True: İşlem başarılı
-        False: İşlem başarısız
+        "signal"   : Sinyal üretildi ve kaydedildi
+        "no_signal": Sinyal üretilemedi (kriter sağlanamadı veya veri yok)
+        "error"    : İşlem sırasında hata oluştu
     """
     try:
         # 1. Veri çek
@@ -37,14 +28,14 @@ def process_single_symbol(symbol: str, timeframe: str) -> bool:
         
         if df is None or len(df) < 200:
             logger.debug(f"⚠️ {symbol} - {timeframe}: Yetersiz veri ({len(df) if df is not None else 0}/200)")
-            return False
+            return "no_signal"
         
         # 2. İndikatörleri hesapla
         df = add_indicators(df)
         
         if df is None:
             logger.warning(f"⚠️ {symbol} - {timeframe}: İndikatör hesaplama başarısız")
-            return False
+            return "error"
         
         # 3. Sinyal üret
         signal = generate_signal(df, symbol, timeframe)
@@ -59,19 +50,19 @@ def process_single_symbol(symbol: str, timeframe: str) -> bool:
                     f"Güç: {signal['strength']}% | "
                     f"Fiyat: ${signal['price']:.4f}"
                 )
-                return True
+                return "signal"
             else:
                 logger.warning(f"⚠️ {symbol} - {timeframe}: Sinyal kaydedilemedi")
-                return False
+                return "error"
         else:
             logger.debug(f"ℹ️ {symbol} - {timeframe}: Sinyal yok")
-            return True  # Sinyal yoksa da başarılı sayılır
+            return "no_signal"
             
     except Exception as e:
         logger.error(f"❌ {symbol} - {timeframe} işlem hatası: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        return "error"
 
 
 def run_job_for_timeframe(timeframe: str) -> dict:
@@ -130,10 +121,12 @@ def run_job_for_timeframe(timeframe: str) -> dict:
             symbol = futures[future]
             try:
                 result = future.result(timeout=30)
-                if result:
+                if result == "signal":
                     successful += 1
-                    # Sinyal olup olmadığını kontrol et (log'dan anlayabiliriz)
-                else:
+                    signals_found += 1
+                elif result == "no_signal":
+                    successful += 1
+                else:  # "error"
                     failed += 1
             except Exception as e:
                 failed += 1
@@ -163,7 +156,7 @@ def run_job_for_all_timeframes(timeframes: List[str]) -> dict:
     """
     logger.info(f"▶ Run başlıyor | timeframes={', '.join(timeframes)}")
 
-    # Her run başında açık sinyallerin TP/SL durumunu kontrol et
+    # Tüm timeframe'lerden önce açık sinyallerin TP/SL durumunu bir kez kontrol et
     check_signal_outcomes()
 
     all_stats = {}
@@ -190,12 +183,14 @@ def check_signal_outcomes() -> dict:
     Her bot çalışmasında bir kez çağrılmalıdır.
 
     - tp_hit / sl_hit henüz set edilmemiş sinyalleri sorgular
-    - Güncel fiyatı Binance'ten çeker
-    - TP veya SL geçildiyse günceller
+    - Binance toplu fiyat endpoint'i ile tek istekte tüm fiyatları çeker
+    - TP öncelikli elif mantığıyla tp_hit ve sl_hit'in aynı anda True olması engellenir
 
     Returns:
         {"checked": int, "tp_hits": int, "sl_hits": int, "still_open": int}
     """
+    import json as _json
+
     db = get_db()
     now = datetime.now(timezone.utc)
 
@@ -206,58 +201,81 @@ def check_signal_outcomes() -> dict:
         "stop_loss": {"$ne": None}
     }))
 
+    if not open_signals:
+        logger.info("📊 Outcome check: Açık sinyal yok")
+        return {"checked": 0, "tp_hits": 0, "sl_hits": 0, "still_open": 0}
+
+    # Tüm benzersiz sembolleri tek Binance isteğiyle çek
+    unique_symbols = list({s["symbol"] for s in open_signals})
+    price_map: dict = {}
+    try:
+        response = requests.get(
+            f"{SPOT_URL}/api/v3/ticker/price",
+            params={"symbols": _json.dumps(unique_symbols)},
+            timeout=REQUEST_TIMEOUT
+        )
+        response.raise_for_status()
+        for item in response.json():
+            price_map[item["symbol"]] = float(item["price"])
+    except Exception as e:
+        logger.error(f"❌ Toplu fiyat çekme hatası: {e}")
+        return {"checked": 0, "tp_hits": 0, "sl_hits": 0, "still_open": 0}
+
     checked = tp_hits = sl_hits = still_open = 0
 
     for signal in open_signals:
         symbol = signal.get("symbol")
-        try:
-            response = requests.get(
-                f"{SPOT_URL}/api/v3/ticker/price",
-                params={"symbol": symbol},
-                timeout=REQUEST_TIMEOUT
+        current_price = price_map.get(symbol)
+
+        if current_price is None:
+            logger.warning(f"⚠️ {symbol} için fiyat bulunamadı, atlanıyor")
+            continue
+
+        checked += 1
+        direction = signal["direction"]
+        tp = signal["target_price"]
+        sl = signal["stop_loss"]
+
+        # TP öncelikli — elif kullanarak tp_hit ve sl_hit'in aynı anda True olması engellenir
+        if direction == "BUY":
+            if current_price >= tp:
+                tp_hit, sl_hit = True, False
+            elif current_price <= sl:
+                tp_hit, sl_hit = False, True
+            else:
+                tp_hit, sl_hit = False, False
+        elif direction == "SELL":
+            if current_price <= tp:
+                tp_hit, sl_hit = True, False
+            elif current_price >= sl:
+                tp_hit, sl_hit = False, True
+            else:
+                tp_hit, sl_hit = False, False
+        else:
+            continue
+
+        if tp_hit or sl_hit:
+            db.signals.update_one(
+                {"_id": signal["_id"]},
+                {"$set": {
+                    "tp_hit": tp_hit,
+                    "sl_hit": sl_hit,
+                    "outcome_price": current_price,
+                    "outcome_checked_at": now
+                }}
             )
-            response.raise_for_status()
-            current_price = float(response.json()["price"])
-            checked += 1
-
-            direction = signal["direction"]
-            tp = signal["target_price"]
-            sl = signal["stop_loss"]
-
-            if direction == "BUY":
-                tp_hit = current_price >= tp
-                sl_hit = current_price <= sl
-            elif direction == "SELL":
-                tp_hit = current_price <= tp
-                sl_hit = current_price >= sl
+            if tp_hit:
+                tp_hits += 1
+                logger.info(f"✅ TP | {symbol} - {signal['timeframe']} | {direction} | ${current_price:.4f}")
             else:
-                continue
-
-            if tp_hit or sl_hit:
-                db.signals.update_one(
-                    {"_id": signal["_id"]},
-                    {"$set": {
-                        "tp_hit": tp_hit,
-                        "sl_hit": sl_hit,
-                        "outcome_price": current_price,
-                        "outcome_checked_at": now
-                    }}
-                )
-                if tp_hit:
-                    tp_hits += 1
-                    logger.info(f"✅ TP | {symbol} - {signal['timeframe']} | {direction} | ${current_price:.4f}")
-                else:
-                    sl_hits += 1
-                    logger.info(f"❌ SL | {symbol} - {signal['timeframe']} | {direction} | ${current_price:.4f}")
-            else:
-                still_open += 1
-                db.signals.update_one(
-                    {"_id": signal["_id"]},
-                    {"$set": {"outcome_checked_at": now}}
-                )
-
-        except Exception as e:
-            logger.warning(f"⚠️ {symbol} outcome kontrolü başarısız: {e}")
+                sl_hits += 1
+                logger.info(f"❌ SL | {symbol} - {signal['timeframe']} | {direction} | ${current_price:.4f}")
+        else:
+            still_open += 1
+            db.signals.update_one(
+                {"_id": signal["_id"]},
+                {"$set": {"outcome_checked_at": now}}
+            )
 
     logger.info(
         f"📊 Outcome check: {checked} kontrol | "
