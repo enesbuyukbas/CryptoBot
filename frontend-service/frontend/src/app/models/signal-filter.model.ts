@@ -5,6 +5,7 @@ export interface SignalFilter {
   symbol?: string;
   direction?: 'BUY' | 'SELL';
   minStrength?: number;
+  status?: 'open' | 'closed';
   page: number;
   pageSize: number;
 }

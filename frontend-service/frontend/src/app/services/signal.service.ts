@@ -35,6 +35,10 @@ export class SignalService {
       url += `&minStrength=${filter.minStrength}`;
     }
 
+    if (filter.status) {
+      url += `&status=${filter.status}`;
+    }
+
     return this.http.get<SignalPagedResponse>(url);
   }
 }

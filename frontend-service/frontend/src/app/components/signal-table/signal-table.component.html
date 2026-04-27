@@ -44,6 +44,20 @@
   <!-- FILTER SECTION -->
   <h2 class="mb-3">📈 Signal Dashboard</h2>
 
+  <!-- TABS -->
+  <div class="signal-tabs mb-4">
+    <button class="signal-tab-btn" [class.active]="activeTab === 'open'" (click)="onTabChange('open')">
+      <span class="signal-tab-icon">📡</span>
+      Active Signals
+      <span class="signal-tab-count" *ngIf="pagedResponse?.totalCount">{{ pagedResponse?.totalCount }}</span>
+    </button>
+    <button class="signal-tab-btn" [class.active]="activeTab === 'closed'" (click)="onTabChange('closed')">
+      <span class="signal-tab-icon">📋</span>
+      History
+      <span class="signal-tab-count signal-tab-count--muted" *ngIf="historyPagedResponse?.totalCount">{{ historyPagedResponse?.totalCount }}</span>
+    </button>
+  </div>
+
   <div class="card mb-4 shadow-sm">
     <div class="card-body">
       <!-- Timeframe Tabs -->
@@ -117,12 +131,13 @@
   </div>
 
   <!-- LOADING STATE -->
-  <div *ngIf="isLoading" class="alert alert-info">
+  <div *ngIf="isLoading && activeTab === 'open'" class="alert alert-info">
     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
     Loading signals...
   </div>
 
-  <!-- MAIN TABLE (desktop/tablet ≥ 769px) -->
+  <!-- ACTIVE SIGNALS TAB -->
+  <div *ngIf="activeTab === 'open'">
   <div class="desktop-table">
   <div class="table-responsive shadow-sm rounded mb-4">
     <table class="table table-hover table-striped table-bordered align-middle text-center">
@@ -345,6 +360,164 @@
       </li>
     </ul>
   </nav>
+  </div><!-- /.active tab -->
+
+  <!-- HISTORY TAB (closed signals) -->
+  <div *ngIf="activeTab === 'closed'">
+
+    <div *ngIf="isHistoryLoading" class="alert alert-info">
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      Loading history...
+    </div>
+
+    <!-- History Desktop Table -->
+    <div class="desktop-table">
+      <div class="table-responsive shadow-sm rounded mb-4">
+        <table class="table table-hover table-striped table-bordered align-middle text-center">
+          <thead class="table-dark">
+            <tr>
+              <th>Coin</th>
+              <th>Timeframe</th>
+              <th>Direction</th>
+              <th>Strength</th>
+              <th>Entry</th>
+              <th>Target</th>
+              <th>Stop Loss</th>
+              <th>Outcome</th>
+              <th>Outcome Price</th>
+              <th>Opened At</th>
+              <th>Reasons</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let signal of historySignals; trackBy: trackBySymbol">
+              <td class="fw-semibold">{{ signal.symbol }}</td>
+              <td>{{ signal.timeframe }}</td>
+              <td>
+                <span class="badge" [ngClass]="getDirectionClass(signal.direction)">
+                  {{ getDirectionLabel(signal.direction) }}
+                </span>
+              </td>
+              <td>
+                <span [style.color]="getStrengthColor(signal.strength)" style="font-weight: 600;">{{ signal.strength }}</span>
+              </td>
+              <td>{{ formatPrice(getEntryPrice(signal)) }}</td>
+              <td>{{ formatPrice(signal.targetPrice) }}</td>
+              <td>{{ formatPrice(signal.stopLoss) }}</td>
+              <td><span [ngClass]="getOutcomeClass(signal)">{{ getOutcomeLabel(signal) }}</span></td>
+              <td>{{ signal.outcomePrice ? formatPrice(signal.outcomePrice) : '—' }}</td>
+              <td class="small">{{ formatDateTime(signal.openedAt) }}</td>
+              <td class="reasons-cell">
+                <span class="reasons-badge" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);"
+                      [attr.data-popover-id]="getReasonPopoverId(signal.symbol, signal.timeframe)"
+                      (click)="toggleReasonPopover(getReasonPopoverId(signal.symbol, signal.timeframe), $event)">
+                  {{ getReasonSummary(signal.reason) }}
+                </span>
+                <div class="reasons-popover"
+                     *ngIf="openPopoverId === getReasonPopoverId(signal.symbol, signal.timeframe) && popoverPosition"
+                     [style.top.px]="popoverPosition.top"
+                     [style.left.px]="popoverPosition.left"
+                     (click)="$event.stopPropagation()">
+                  <div class="reasons-popover-header"><strong>{{ signal.symbol }} - Reasons</strong></div>
+                  <div class="reasons-popover-body">
+                    <span *ngFor="let reason of signal.reason" class="reason-badge"
+                          [ngClass]="getReasonBadgeClass(reason)" [ngStyle]="getReasonBadgeStyle(reason)">
+                      {{ getReasonLabel(reason) }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="historySignals.length === 0 && !isHistoryLoading">
+              <td colspan="11" class="text-muted py-4">No closed signals found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- History Mobile Cards -->
+    <div class="mobile-signal-list">
+      <div *ngIf="historySignals.length === 0 && !isHistoryLoading" class="text-muted text-center py-5">
+        No closed signals found
+      </div>
+      <div class="signal-mobile-card" *ngFor="let signal of historySignals; trackBy: trackBySymbol">
+        <div class="signal-card-head">
+          <div class="signal-card-symbol">{{ signal.symbol }}</div>
+          <span class="badge" [ngClass]="getDirectionClass(signal.direction)">{{ getDirectionLabel(signal.direction) }}</span>
+        </div>
+        <div class="signal-card-body">
+          <div class="signal-card-row">
+            <span class="signal-card-label">Timeframe</span>
+            <span class="signal-card-value">{{ signal.timeframe }}</span>
+          </div>
+          <div class="signal-card-row">
+            <span class="signal-card-label">Strength</span>
+            <span class="signal-card-value" [style.color]="getStrengthColor(signal.strength)" style="font-weight:600;">{{ signal.strength }}</span>
+          </div>
+          <div class="signal-card-row">
+            <span class="signal-card-label">Entry</span>
+            <span class="signal-card-value">{{ formatPrice(getEntryPrice(signal)) }}</span>
+          </div>
+          <div class="signal-card-row">
+            <span class="signal-card-label">Target</span>
+            <span class="signal-card-value">{{ formatPrice(signal.targetPrice) }}</span>
+          </div>
+          <div class="signal-card-row">
+            <span class="signal-card-label">Stop Loss</span>
+            <span class="signal-card-value">{{ formatPrice(signal.stopLoss) }}</span>
+          </div>
+          <div class="signal-card-row">
+            <span class="signal-card-label">Outcome</span>
+            <span class="signal-card-value" [ngClass]="getOutcomeClass(signal)">{{ getOutcomeLabel(signal) }}</span>
+          </div>
+          <div class="signal-card-row">
+            <span class="signal-card-label">Outcome Price</span>
+            <span class="signal-card-value">{{ signal.outcomePrice ? formatPrice(signal.outcomePrice) : '—' }}</span>
+          </div>
+          <div class="signal-card-row">
+            <span class="signal-card-label">Opened At</span>
+            <span class="signal-card-value" style="font-size:0.8rem;">{{ formatDateTime(signal.openedAt) }}</span>
+          </div>
+        </div>
+        <div class="signal-card-reasons">
+          <span class="signal-card-label">Reasons</span>
+          <div class="d-flex flex-wrap gap-1 mt-1">
+            <span *ngFor="let reason of signal.reason" class="reason-badge"
+                  [ngClass]="getReasonBadgeClass(reason)" [ngStyle]="getReasonBadgeStyle(reason)">
+              {{ getReasonLabel(reason) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Pagination -->
+    <nav aria-label="History page navigation" class="pagination-wrapper" *ngIf="(historyPagedResponse?.totalPages || 0) > 1">
+      <div class="text-muted small" style="order: -1; width: 100%;">
+        Showing {{ ((historyCurrentPage - 1) * historyPageSize) + 1 }} to {{ getMin(historyCurrentPage * historyPageSize, historyPagedResponse?.totalCount || 0) }}
+        of {{ historyPagedResponse?.totalCount || 0 }} signals
+      </div>
+      <ul class="pagination mb-0 d-none d-sm-flex">
+        <li class="page-item" [class.disabled]="historyCurrentPage === 1">
+          <a class="page-link page-link--nav page-link--text" (click)="onHistoryPageChange(historyCurrentPage - 1)" href="javascript:void(0)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Previous
+          </a>
+        </li>
+        <li class="page-item" [class.active]="p === historyCurrentPage" *ngFor="let p of getHistoryPageNumbers()">
+          <span class="page-link" *ngIf="p === -1">&hellip;</span>
+          <a class="page-link" *ngIf="p !== -1" (click)="onHistoryPageChange(p)" href="javascript:void(0)">{{ p }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="historyCurrentPage === (historyPagedResponse?.totalPages || 1)">
+          <a class="page-link page-link--nav page-link--text" (click)="onHistoryPageChange(historyCurrentPage + 1)" href="javascript:void(0)">
+            Next
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+  </div><!-- /.history tab -->
 
 </div>
-

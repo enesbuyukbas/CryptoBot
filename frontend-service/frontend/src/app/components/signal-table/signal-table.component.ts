@@ -21,6 +21,16 @@ export class SignalTableComponent implements OnInit, OnDestroy {
   signals: Signal[] = [];
   pagedResponse: SignalPagedResponse | null = null;
 
+  // History tab data
+  historySignals: Signal[] = [];
+  historyPagedResponse: SignalPagedResponse | null = null;
+  historyCurrentPage: number = 1;
+  historyPageSize: number = 10;
+  isHistoryLoading: boolean = false;
+
+  // Active tab
+  activeTab: 'open' | 'closed' = 'open';
+
   // All signals for multi-timeframe availability check
   allTimeframeSignals: Map<string, Signal[]> = new Map();
 
@@ -51,6 +61,7 @@ export class SignalTableComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadFilteredSignals();
+    this.loadHistorySignals();
     this.loadMultiTimeframeData();
   }
 
@@ -91,6 +102,7 @@ export class SignalTableComponent implements OnInit, OnDestroy {
       symbol: this.symbolSearch || undefined,
       direction: this.selectedDirection ? (this.selectedDirection as 'BUY' | 'SELL') : undefined,
       minStrength: this.minStrength > 0 ? this.minStrength : undefined,
+      status: 'open',
       page: this.currentPage,
       pageSize: this.pageSize
     };
@@ -122,6 +134,7 @@ export class SignalTableComponent implements OnInit, OnDestroy {
       symbol: this.symbolSearch || undefined,
       direction: this.selectedDirection ? (this.selectedDirection as 'BUY' | 'SELL') : undefined,
       minStrength: this.minStrength > 0 ? this.minStrength : undefined,
+      status: 'open',
       page: 1,
       pageSize: 1000 // Get many items to find true top 3
     };
@@ -135,6 +148,49 @@ export class SignalTableComponent implements OnInit, OnDestroy {
         this.top3Signals = [];
       }
     });
+  }
+
+  loadHistorySignals(): void {
+    this.isHistoryLoading = true;
+
+    const filter: SignalFilter = {
+      timeframe: this.selectedTimeframe,
+      symbol: this.symbolSearch || undefined,
+      direction: this.selectedDirection ? (this.selectedDirection as 'BUY' | 'SELL') : undefined,
+      minStrength: this.minStrength > 0 ? this.minStrength : undefined,
+      status: 'closed',
+      page: this.historyCurrentPage,
+      pageSize: this.historyPageSize
+    };
+
+    this.signalService.getFilteredSignals(filter).subscribe({
+      next: (data) => {
+        this.historyPagedResponse = data;
+        this.historySignals = data.items ?? [];
+        this.isHistoryLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading history signals:', err);
+        this.historySignals = [];
+        this.historyPagedResponse = null;
+        this.isHistoryLoading = false;
+      }
+    });
+  }
+
+  onTabChange(tab: 'open' | 'closed'): void {
+    this.activeTab = tab;
+    if (tab === 'closed') {
+      this.historyCurrentPage = 1;
+      this.loadHistorySignals();
+    }
+  }
+
+  onHistoryPageChange(newPage: number): void {
+    if (newPage >= 1 && (this.historyPagedResponse?.totalPages || 0) >= newPage) {
+      this.historyCurrentPage = newPage;
+      this.loadHistorySignals();
+    }
   }
 
   updateTop3Signals(allFilteredItems: Signal[]): void {
@@ -157,29 +213,39 @@ export class SignalTableComponent implements OnInit, OnDestroy {
 
   onTimeframeChange(timeframe: '15m' | '1h' | '4h' | '1d'): void {
     this.selectedTimeframe = timeframe;
-    this.currentPage = 1; // Reset to first page
+    this.currentPage = 1;
+    this.historyCurrentPage = 1;
     this.loadFilteredSignals();
+    this.loadHistorySignals();
   }
 
   onSymbolSearchChange(): void {
     this.currentPage = 1;
+    this.historyCurrentPage = 1;
     this.loadFilteredSignals();
+    this.loadHistorySignals();
   }
 
   onDirectionChange(): void {
     this.currentPage = 1;
+    this.historyCurrentPage = 1;
     this.loadFilteredSignals();
+    this.loadHistorySignals();
   }
 
   onStrengthChange(): void {
     this.currentPage = 1;
+    this.historyCurrentPage = 1;
     this.loadFilteredSignals();
+    this.loadHistorySignals();
   }
 
   onStrengthPresetChange(preset: number): void {
     this.minStrength = preset;
     this.currentPage = 1;
+    this.historyCurrentPage = 1;
     this.loadFilteredSignals();
+    this.loadHistorySignals();
   }
 
   onPageChange(newPage: number): void {
@@ -411,6 +477,16 @@ export class SignalTableComponent implements OnInit, OnDestroy {
     if (cur <= 2)          return [1, 2, 3, -1, total];
     if (cur >= total - 1)  return [1, -1, total - 2, total - 1, total];
     return [1, -1, cur, -1, total];
+  }
+
+  getHistoryPageNumbers(): number[] {
+    if (!this.historyPagedResponse) return [1];
+    const total = this.historyPagedResponse.totalPages;
+    const cur   = this.historyCurrentPage;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (cur <= 4)          return [1, 2, 3, 4, 5, -1, total];
+    if (cur >= total - 3)  return [1, -1, total - 4, total - 3, total - 2, total - 1, total];
+    return [1, -1, cur - 1, cur, cur + 1, -1, total];
   }
 
   getMin = Math.min;
