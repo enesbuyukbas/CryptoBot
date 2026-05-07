@@ -189,8 +189,6 @@ def check_signal_outcomes() -> dict:
     Returns:
         {"checked": int, "tp_hits": int, "sl_hits": int, "still_open": int}
     """
-    import json as _json
-
     db = get_db()
     now = datetime.now(timezone.utc)
 
@@ -205,20 +203,28 @@ def check_signal_outcomes() -> dict:
         logger.info("📊 Outcome check: Açık sinyal yok")
         return {"checked": 0, "tp_hits": 0, "sl_hits": 0, "still_open": 0}
 
-    # Tüm benzersiz sembolleri tek Binance isteğiyle çek
     unique_symbols = list({s["symbol"] for s in open_signals})
+    logger.info(f"📊 Outcome check: {len(open_signals)} açık sinyal | {len(unique_symbols)} benzersiz sembol")
+
+    # Parametre göndermeden tüm fiyatları çek — Binance tüm sembolleri döner
+    response = None
     price_map: dict = {}
     try:
         response = requests.get(
             f"{SPOT_URL}/api/v3/ticker/price",
-            params={"symbols": _json.dumps(unique_symbols)},
             timeout=REQUEST_TIMEOUT
         )
         response.raise_for_status()
-        for item in response.json():
-            price_map[item["symbol"]] = float(item["price"])
+        price_map = {
+            item["symbol"]: float(item["price"])
+            for item in response.json()
+            if "symbol" in item and "price" in item
+        }
+        logger.info(f"📊 Outcome check: {len(price_map)} fiyat çekildi")
     except Exception as e:
-        logger.error(f"❌ Toplu fiyat çekme hatası: {e}")
+        status = response.status_code if response is not None else "N/A"
+        body = response.text[:500] if response is not None else ""
+        logger.error(f"❌ Toplu fiyat çekme hatası: {e} | status={status} | body={body}")
         return {"checked": 0, "tp_hits": 0, "sl_hits": 0, "still_open": 0}
 
     checked = tp_hits = sl_hits = still_open = 0
