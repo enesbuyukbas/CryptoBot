@@ -47,9 +47,15 @@ namespace backend_service.Services
             if (pageSize < 1 || pageSize > 1000) pageSize = 25;
 
             // Determine freshness window based on timeframe and status
-            // Closed signals: up to 7 days
             var cutoffDate = status == "closed"
-                ? DateTime.UtcNow.AddDays(-7)
+                ? timeframe switch
+                {
+                    "15m" => DateTime.UtcNow.AddDays(-3),
+                    "1h"  => DateTime.UtcNow.AddDays(-7),
+                    "4h"  => DateTime.UtcNow.AddDays(-15),
+                    "1d"  => DateTime.UtcNow.AddDays(-30),
+                    _     => DateTime.UtcNow.AddDays(-7)
+                }
                 : timeframe switch
                 {
                     "15m" => DateTime.UtcNow.AddHours(-24),
