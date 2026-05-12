@@ -37,7 +37,8 @@ CryptoBot/
 │   ├── jobs.py              # Analiz işleri
 │   ├── repository.py        # MongoDB operasyonları
 │   ├── binance_client.py    # Binance API client
-│   └── requirements.txt      # Python bağımlılıkları
+│   ├── requirements.txt      # Python bağımlılıkları
+│   └── scripts/             # Yönetim ve bakım scriptleri
 ├── frontend-service/         # Angular 19 Web Uygulaması
 │   └── frontend/
 │       ├── src/
@@ -95,7 +96,7 @@ CryptoBot/
 - **Pazar**: Binance SPOT
 - **Veritabanı**: MongoDB
 - **Komut Satırı**: argparse ile parametrize
-- **Çalıştırma Ortamı**: AWS EC2 (7/24 aktif)
+- **Çalıştırma Ortamı**: AWS Lambda (Docker container, serverless)
 
 **Başlıca Kütüphaneler**:
 - `pymongo` (MongoDB işlemleri)
@@ -311,8 +312,13 @@ GET /api/signals/filtered?timeframe=15m&symbol=BTCUSDT&direction=BUY&minStrength
 - `symbol` (isteğe bağlı): Sembol adı (örn: BTCUSDT)
 - `direction` (isteğe bağlı): `BUY` veya `SELL`
 - `minStrength` (isteğe bağlı): 0-100 arası minimum sinyal gücü
+- `status` (isteğe bağlı): `open` veya `closed`
 - `page` (varsayılan: 1): Sayfa numarası
 - `pageSize` (varsayılan: 25): Sayfa başına öğe sayısı (max: 1000)
+
+**Status ve Geçmiş Penceresi**:
+- `open`: Symbol başına yalnızca en son sinyal gösterilir; timeframe bazlı pencere (15m: 24s, 1h: 3g, 4h: 7g, 1d: 30g)
+- `closed`: Tüm geçmiş sinyaller gösterilir; timeframe bazlı pencere (15m: 3g, 1h: 7g, 4h: 15g, 1d: 30g)
 
 ---
 
@@ -340,7 +346,9 @@ Backend, piyasa verileri için aşağıdaki external API'lerle entegre edilmişt
   "timeframe": "1h",
   "direction": "BUY",
   "strength": 85,
-  "openedAt": ISODate("2026-04-19T10:30:00Z"),
+  "opened_at": ISODate("2026-04-19T10:30:00Z"),
+  "created_at": ISODate("2026-04-19T10:30:00Z"),
+  "expires_at": ISODate("2026-04-26T10:30:00Z"),
   "first_price": 65000.50,
   "stop_loss": 64500.25,
   "target_price": 67000.75,
@@ -348,6 +356,7 @@ Backend, piyasa verileri için aşağıdaki external API'lerle entegre edilmişt
   "tp_hit": false,
   "sl_hit": false,
   "outcome_price": null,
+  "outcome_checked_at": null,
   "reason": ["EMA_ALIGNMENT", "RSI_OVERSOLD"],
   "atr": 250
 }
@@ -465,20 +474,42 @@ MONGODB_URI=mongodb://username:password@mongodb-host:27017/CryptoBot
 
 - Tüm üretilen sinyallar MongoDB'ye kaydedilir
 - Her sinyal şunları içerir: symbol, direction, strength, entry price, stop-loss, target price, indicators
-- Timeframe'e göre veri saklama süresi:
-  - `15m`: 24 saat
-  - `1h`: 3 gün
-  - `4h`: 7 gün
+- Sinyaller `expires_at` alanı ile TTL index üzerinden otomatik silinir
+- Timeframe'e göre veri saklama süresi (açık ve kapanmış sinyaller için aynı):
+  - `15m`: 3 gün
+  - `1h`: 7 gün
+  - `4h`: 15 gün
   - `1d`: 30 gün
 
 **MongoDB Koleksiyon İndeksleme**
 
 ```javascript
-db.signals.createIndex({ "timeframe": 1, "openedAt": -1 })
-db.signals.createIndex({ "symbol": 1, "openedAt": -1 })
+db.signals.createIndex({ "symbol": 1, "timeframe": 1, "created_at": -1 })
+db.signals.createIndex({ "created_at": 1 }, { expireAfterSeconds: 2592000 })  // 30 gün TTL
+db.signals.createIndex({ "expires_at": 1 }, { expireAfterSeconds: 0 })        // expires_at TTL
 db.signals.createIndex({ "strength": -1 })
-db.signals.createIndex({ "direction": 1 })
+db.signals.createIndex({ "symbol": 1, "timeframe": 1, "direction": 1 })
 ```
+
+### Bakım Scriptleri (bot-service/scripts)
+
+Bot service, MongoDB veri bakımı için aşağıdaki yardımcı scriptleri içerir:
+
+| Script | Amaç |
+|--------|------|
+| `count_signal_retention.py` | Sinyal sayısını timeframe, status ve `expires_at` varlığına göre raporlar |
+| `backfill_signal_expires_at.py` | `expires_at` alanı eksik sinyallere geçmişe dönük değer atar |
+
+```bash
+# Mevcut retention durumunu incele
+python scripts/count_signal_retention.py
+
+# expires_at backfill — önce dry-run ile önizle
+python scripts/backfill_signal_expires_at.py --dry-run
+python scripts/backfill_signal_expires_at.py
+```
+
+---
 
 ### AWS Lambda Best Practices
 
@@ -523,9 +554,7 @@ db.signals.createIndex({ "direction": 1 })
 | Lambda MongoDB'ye bağlanamıyor | Atlas IP whitelist'ine Lambda çıkış IP'sini veya `0.0.0.0/0` ekleyin |
 | Outcome sütunu boş görünüyor | Backend'in yeni alanları döndürdüğünü `/api/signals/filtered` ile doğrulayın |
 | Current fiyat güncellenmiyor | BinancePriceService 30s cache'i; sayfayı yenileyin veya 30s bekleyin |
-| Lambda MongoDB'ye bağlanamıyor | Atlas IP whitelist'ine Lambda çıkış IP'sini veya `0.0.0.0/0` ekleyin |
-| Outcome sütunu boş görünüyor | Backend'in yeni alanları döndürdüğünü `/api/signals/filtered` ile doğrulayın |
-| Current fiyat güncellenmiyor | BinancePriceService 30s cache'i; sayfayı yenileyin veya 30s bekleyin |
+| Sinyaller beklenen sürede silinmiyor | MongoDB Atlas TTL worker ~60 dakikada bir çalışır; `expires_at` backfill scriptini çalıştırın |
 
 ---
 
