@@ -47,9 +47,9 @@ namespace backend_service.Services
             if (pageSize < 1 || pageSize > 1000) pageSize = 25;
 
             // Determine freshness window based on timeframe and status
-            // Closed signals: up to 30 days (matches MongoDB TTL)
+            // Closed signals: up to 7 days
             var cutoffDate = status == "closed"
-                ? DateTime.UtcNow.AddDays(-30)
+                ? DateTime.UtcNow.AddDays(-7)
                 : timeframe switch
                 {
                     "15m" => DateTime.UtcNow.AddHours(-24),
