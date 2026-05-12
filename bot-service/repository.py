@@ -1,11 +1,11 @@
 import logging
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Optional
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from pymongo.errors import DuplicateKeyError, ConnectionFailure
 
-from config import MONGODB_URI, SIGNAL_TTL_SECONDS, SIGNAL_MAX_AGE_SECONDS
+from config import MONGODB_URI, SIGNAL_TTL_SECONDS, SIGNAL_MAX_AGE_SECONDS, OPEN_SIGNAL_RETENTION_SECONDS
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,13 @@ def init_indexes():
             [("created_at", ASCENDING)],
             name="idx_ttl_created_at",
             expireAfterSeconds=SIGNAL_TTL_SECONDS
+        )
+        
+        # Index 2b: expires_at için TTL index (expireAfterSeconds=0 — tarihe göre siler)
+        db.signals.create_index(
+            [("expires_at", ASCENDING)],
+            name="idx_ttl_expires_at",
+            expireAfterSeconds=0
         )
         
         # Index 3: Güce göre sıralama için
@@ -188,6 +195,7 @@ def save_signal_if_new(signal: Dict) -> bool:
             # Mevcut kaydı güncelle
             # NOT: first_price ve first_opened_at HİÇBİR ZAMAN güncellenmez —
             # ilk sinyalin fiyatı ve zamanı korunur
+            open_retention = OPEN_SIGNAL_RETENTION_SECONDS.get(timeframe, 30 * 86400)
             update_result = db.signals.update_one(
                 {"_id": last_signal["_id"]},
                 {
@@ -198,6 +206,7 @@ def save_signal_if_new(signal: Dict) -> bool:
                         "opened_at": signal.get("opened_at"),
                         # stop_loss, target_price, risk_reward, risk_amount, reward_amount, atr
                         # ilk açılıştaki değerler korunur — fiyat değişse bile üzerine yazılmaz
+                        "expires_at": current_time + timedelta(seconds=open_retention),
                         "updated_at": current_time
                     }
                 }
@@ -212,6 +221,7 @@ def save_signal_if_new(signal: Dict) -> bool:
         
         # ================== FARKLI DIRECTION İSE YENİ KAYIT ==================
         else:
+            open_retention = OPEN_SIGNAL_RETENTION_SECONDS.get(timeframe, 30 * 86400)
             signal_to_save = {
                 "symbol": symbol,
                 "timeframe": timeframe,
@@ -234,6 +244,7 @@ def save_signal_if_new(signal: Dict) -> bool:
                 "sl_hit": None,
                 "outcome_price": None,
                 "outcome_checked_at": None,
+                "expires_at": current_time + timedelta(seconds=open_retention),
                 "created_at": current_time,
                 "updated_at": current_time
             }

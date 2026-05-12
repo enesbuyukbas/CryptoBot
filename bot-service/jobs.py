@@ -1,10 +1,10 @@
 import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List
 
-from config import MAX_WORKERS, CANDLE_LIMIT, SPOT_URL, REQUEST_TIMEOUT
+from config import MAX_WORKERS, CANDLE_LIMIT, SPOT_URL, REQUEST_TIMEOUT, CLOSED_SIGNAL_RETENTION_SECONDS
 from binance_client import get_spot_symbols, fetch_klines
 from indicators import add_indicators
 from signals import generate_signal
@@ -261,13 +261,15 @@ def check_signal_outcomes() -> dict:
             continue
 
         if tp_hit or sl_hit:
+            closed_retention = CLOSED_SIGNAL_RETENTION_SECONDS.get(signal["timeframe"], 30 * 86400)
             db.signals.update_one(
                 {"_id": signal["_id"]},
                 {"$set": {
                     "tp_hit": tp_hit,
                     "sl_hit": sl_hit,
                     "outcome_price": current_price,
-                    "outcome_checked_at": now
+                    "outcome_checked_at": now,
+                    "expires_at": now + timedelta(seconds=closed_retention)
                 }}
             )
             if tp_hit:

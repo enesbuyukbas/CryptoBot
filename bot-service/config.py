@@ -57,6 +57,22 @@ SIGNAL_STRENGTH_MODERATE = 50
 # MongoDB'de sinyal saklama süresi (saniye)
 SIGNAL_TTL_SECONDS = 30 * 24 * 60 * 60  # 30 gün
 
+# expires_at tabanlı retention — açık sinyaller
+OPEN_SIGNAL_RETENTION_SECONDS = {
+    "15m": 3  * 24 * 3600,   # 3 gün
+    "1h":  7  * 24 * 3600,   # 7 gün
+    "4h":  15 * 24 * 3600,   # 15 gün
+    "1d":  30 * 24 * 3600,   # 30 gün
+}
+
+# expires_at tabanlı retention — kapanmış sinyaller (TP/SL)
+CLOSED_SIGNAL_RETENTION_SECONDS = {
+    "15m": 3  * 24 * 3600,   # 3 gün
+    "1h":  7  * 24 * 3600,   # 7 gün
+    "4h":  15 * 24 * 3600,   # 15 gün
+    "1d":  30 * 24 * 3600,   # 30 gün
+}
+
 # Aynı yönde sinyal maksimum güncelleme süresi (saniye)
 # Bu süreyi geçen sinyal "yeni" sayılır, mevcut belge üzerine yazılmaz
 SIGNAL_MAX_AGE_SECONDS = {
