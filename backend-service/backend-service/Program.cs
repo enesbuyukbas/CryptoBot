@@ -5,15 +5,20 @@ using Microsoft.Extensions.Caching.Memory;  // MemoryCache DI
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS 
+// CORS
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularApp",
         policy => policy
-            .WithOrigins("http://localhost:4200") //  Angular'�n �al��t��� port
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials()); // E�er kimlik do�rulama gerekiyorsa
+            .AllowAnyMethod());
+            // Add .AllowCredentials() only if the frontend sends cookies or
+            // Authorization headers in cross-origin requests (e.g. cookie-based auth).
 });
 
 // MongoDB Ayarlar�n� Konfig�rasyon Dosyas�ndan Y�kle
