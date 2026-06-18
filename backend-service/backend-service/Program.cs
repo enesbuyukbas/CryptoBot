@@ -70,6 +70,11 @@ builder.Services.AddHttpClient<IAverageRsiClient, CoingeckoAverageRsiClient>(c =
 
 
 builder.Services.AddMemoryCache(); // MemoryCache servisi DI
+
+builder.Services.AddSingleton<MongoHealthCheck>();
+builder.Services.AddHealthChecks()
+    .AddCheck<MongoHealthCheck>("mongodb");
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -93,5 +98,24 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (ctx, report) =>
+    {
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.WriteAsync(
+            System.Text.Json.JsonSerializer.Serialize(new
+            {
+                status = report.Status.ToString(),
+                checks = report.Entries.Select(e => new
+                {
+                    name = e.Key,
+                    status = e.Value.Status.ToString(),
+                    description = e.Value.Description
+                })
+            }));
+    }
+});
 
 app.Run();
