@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Signal } from '../models/signal.model';
 import { SignalFilter, SignalPagedResponse } from '../models/signal-filter.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalService {
-  private apiUrl = 'http://localhost:5008/api/signals'; // Backend API URL
+  private apiUrl = `${environment.apiBaseUrl}/api/signals`;
 
   constructor(private http: HttpClient) {}
 
